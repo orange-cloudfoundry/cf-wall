@@ -1,0 +1,5 @@
+cfy-wall
+config/cfy-wall.json
+ui/static/bower_components/*
+vendor/*
+ui/static/token.js
