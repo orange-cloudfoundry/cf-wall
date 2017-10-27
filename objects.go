@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "net/url"
 import "net/http"
+import "errors"
 import "github.com/gorilla/mux"
 import log  "github.com/sirupsen/logrus"
 
@@ -62,18 +63,17 @@ func NewObjectHandler(p_router *mux.Router) (ObjectHandler) {
 
 
 func (self *ObjectHandler) GetServices(p_res http.ResponseWriter, p_req *http.Request) {
-  l_api,  l_err := NewCCCliFromRequest(&GApp.Config, p_req)
+  l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
   if (l_err != nil) {
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    panic(HttpError{l_err, 400, 10})
   }
 
   log.Info("reading services from CC api")
   l_users, l_err := l_api.ListServices()
   if (l_err != nil) {
-    log.WithError(l_err).Error("unable to read services from CC api")
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    l_uerr := errors.New("unable to read services from CC api")
+    log.WithError(l_err).Error(l_uerr.Error())
+    panic(HttpError{l_uerr, 400, 10})
   }
 
   l_res := ServiceResponse{}
@@ -91,16 +91,15 @@ func (self *ObjectHandler) GetServices(p_res http.ResponseWriter, p_req *http.Re
 func (self *ObjectHandler) GetBuildpacks(p_res http.ResponseWriter, p_req *http.Request) {
   l_api,  l_err := NewCCCliFromRequest(&GApp.Config, p_req)
   if (l_err != nil) {
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    panic(HttpError{l_err, 400, 10})
   }
 
   log.Info("reading buildpacks from CC api")
   l_users, l_err := l_api.ListBuildpacks()
   if (l_err != nil) {
-    log.WithError(l_err).Error("unable to read buildpacks from CC api")
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    l_uerr := errors.New("unable to read services from CC api")
+    log.WithError(l_err).Error(l_uerr.Error())
+    panic(HttpError{l_uerr, 400, 10})
   }
 
   l_res := BuildpackResponse{}
@@ -117,16 +116,15 @@ func (self *ObjectHandler) GetBuildpacks(p_res http.ResponseWriter, p_req *http.
 func (self *ObjectHandler) GetUsers(p_res http.ResponseWriter, p_req *http.Request) {
   l_api,  l_err := NewCCCliFromRequest(&GApp.Config, p_req)
   if (l_err != nil) {
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    panic(HttpError{l_err, 400, 10})
   }
 
   log.Info("reading users from CC api")
   l_users, l_err := l_api.ListUsers()
   if (l_err != nil) {
-    log.WithError(l_err).Error("unable to read users from CC api")
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    l_uerr := errors.New("unable to read services from CC api")
+    log.WithError(l_err).Error(l_uerr.Error())
+    panic(HttpError{l_uerr, 400, 10})
   }
 
   l_res := UserResponse{}
@@ -143,16 +141,15 @@ func (self *ObjectHandler) GetUsers(p_res http.ResponseWriter, p_req *http.Reque
 func (self *ObjectHandler) GetOrgs(p_res http.ResponseWriter, p_req *http.Request) {
   l_api,  l_err := NewCCCliFromRequest(&GApp.Config, p_req)
   if (l_err != nil) {
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    panic(HttpError{l_err, 400, 10})
   }
 
   log.Info("reading orgs from CC api")
   l_orgs, l_err := l_api.ListOrgs()
   if (l_err != nil) {
-    log.WithError(l_err).Error("unable to read orgs from CC api")
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    l_uerr := errors.New("unable to read services from CC api")
+    log.WithError(l_err).Error(l_uerr.Error())
+    panic(HttpError{l_uerr, 400, 10})
   }
 
   l_res := OrgResponse{}
@@ -172,8 +169,7 @@ func (self *ObjectHandler) GetOrgSpaces(p_res http.ResponseWriter, p_req *http.R
 
   l_api,  l_err := NewCCCliFromRequest(&GApp.Config, p_req)
   if (l_err != nil) {
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    panic(HttpError{l_err, 400, 10})
   }
 
   log.WithFields(log.Fields{
@@ -183,9 +179,9 @@ func (self *ObjectHandler) GetOrgSpaces(p_res http.ResponseWriter, p_req *http.R
   l_query.Add("q", fmt.Sprintf("organization_guid:%s", l_orgID))
   l_spaces, l_err := l_api.ListSpacesByQuery(l_query)
   if (l_err != nil) {
-    log.WithError(l_err).Error("unable to read spaces from CC api")
-    WriteJsonError(p_res, 400, 10, l_err )
-    return
+    l_uerr := errors.New("unable to read services from CC api")
+    log.WithError(l_err).Error(l_uerr.Error())
+    panic(HttpError{l_uerr, 400, 10})
   }
 
   l_res := SpaceResponse{}
@@ -201,16 +197,15 @@ func (self *ObjectHandler) GetOrgSpaces(p_res http.ResponseWriter, p_req *http.R
 func (self *ObjectHandler) GetSpaces(p_res http.ResponseWriter, p_req *http.Request) {
   l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
   if (l_err != nil) {
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    panic(HttpError{l_err, 400, 10})
   }
 
   log.Info("reading spaces from CC api")
   l_spaces, l_err := l_api.ListSpaces()
   if (l_err != nil) {
-    log.WithError(l_err).Error("unable to read spaces from CC api")
-    WriteJsonError(p_res, 400, 10, l_err)
-    return
+    l_uerr := errors.New("unable to read services from CC api")
+    log.WithError(l_err).Error(l_uerr.Error())
+    panic(HttpError{l_uerr, 400, 10})
   }
 
   l_res := SpaceResponse{}

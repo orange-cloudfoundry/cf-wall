@@ -1,0 +1,7 @@
+app_name: "cfy-wall"
+services:
+  - name: smtp-service
+    tags: [smtp]
+    credentials:
+      host: smtp.redacted-domain.org
+      port: 25
