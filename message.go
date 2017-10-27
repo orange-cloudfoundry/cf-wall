@@ -49,7 +49,7 @@ func NewMessageHandler(p_app *App, p_router *mux.Router) (MessageHandler) {
   }
 
   p_router.Path("/v1/message").
-    HandlerFunc(DecorateHandler(l_obj.HandleMessage, panicHandler)).
+    HandlerFunc(DecorateHandler(l_obj.HandleMessage)).
     HeadersRegexp("Content-Type",  "application/json.*").
     Methods("POST")
 
@@ -126,6 +126,9 @@ func (self *MessageHandler) HandleMessage(p_res http.ResponseWriter, p_req *http
 
   // create message
   // send message
+
+  // todo check 1 target
+  // -> function
   var l_opts smtptype.Smtp
   _ = gautocloud.Inject(&l_opts)
 
