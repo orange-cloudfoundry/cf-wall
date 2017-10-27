@@ -18,6 +18,7 @@ type AppConfig struct {
   HttpPort        int    `json:"http-port"`
   LogLevel        string `json:"log-level"`
   LogName         string `json:"log-name"`
+  MailFrom        string `json:"mail-from"`
 }
 
 
@@ -50,6 +51,7 @@ func NewAppConfig() (AppConfig) {
     HttpPort        : 443,
     LogLevel        : "error",
     LogName         : "cfy-wall",
+    MailFrom        : "cfy-wall@localhost",
   }
   l_conf.parseArgs()
   return l_conf
@@ -81,7 +83,8 @@ func (self *AppConfig) parseCmdLine() {
   flag.StringVar(&self.HttpKey,       "http-key",           self.HttpKey,       "Web server SSL server key (leave empty for http)")
   flag.IntVar(&self.HttpPort,         "http-port",          self.HttpPort,      "Web server port")
   flag.StringVar(&self.LogLevel,      "log-level",          self.LogLevel,      "Logger verbosity level")
-  flag.StringVar(&self.LogName,      "log-Name",            self.LogName,       "Logger component name")
+  flag.StringVar(&self.LogName,       "log-Name",           self.LogName,       "Logger component name")
+  flag.StringVar(&self.MailFrom,      "mail-from",          self.MailFrom,      "Mail From: address")
   flag.Parse()
 }
 

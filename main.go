@@ -6,6 +6,7 @@ import     "net/http"
 import     "github.com/gorilla/mux"
 import log "github.com/sirupsen/logrus"
 
+
 var GApp            App
 var GUiHandler      UiHandler
 var GObjectHandler  ObjectHandler

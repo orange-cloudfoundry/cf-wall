@@ -20,6 +20,7 @@
     "datatables.net-bs": "^2.1.1",
     "datatables.net-buttons-bs": "^1.4.2",
     "font-awesome": "^4.7.0",
-    "bootstrap-validator": "^0.11.9"
+    "bootstrap-validator": "^0.11.9",
+    "markdown-it": "^8.4.0"
   }
 }
