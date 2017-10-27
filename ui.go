@@ -38,7 +38,7 @@ func NewUiHandler(p_router *mux.Router) (UiHandler) {
   l_obj := UiHandler{ Tpl : l_tpl }
   p_router.PathPrefix("/ui/static/").
     Handler(http.StripPrefix("/ui/static/", http.FileServer(http.Dir("ui/static"))))
-  p_router .HandleFunc("/ui", l_obj.HandlerRequest)
+  p_router.HandleFunc("/ui", DecorateHandler(l_obj.HandlerRequest))
 
   return l_obj
 }

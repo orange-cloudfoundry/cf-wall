@@ -79,6 +79,40 @@ function Api(p_app) {
 };
 
 
+function Preview(p_app) {
+    var self = this;
+
+
+    self.md = window.markdownit();
+    console.log(self.md);
+
+    self.ui = {
+        page : $("#md-content"),
+        preview  : $('a[href="#preview"]')
+    };
+
+    self.setContent = function(p_str) {
+        var l_content = self.md.render(p_str);
+        self.ui.page.html(l_content);
+    };
+
+    self.onTabClick = function() {
+        var l_val = p_app.msg.getContent();
+        self.setContent(l_val);
+    };
+
+    self.bind = function() {
+        self.ui.preview.click(self.onTabClick);
+    };
+
+    self.init = function() {
+        self.bind();
+    };
+
+
+    self.init();
+};
+
 function Message(p_app) {
   var self = this;
 
@@ -87,6 +121,10 @@ function Message(p_app) {
     send    : $("#send"),
     subject : $("#message_subject"),
     message : $("#message_message")
+  };
+
+  self.getContent = function() {
+      return self.ui.message.val();
   };
 
   self.onSendClick = function() {
@@ -98,6 +136,7 @@ function Message(p_app) {
   };
 
   self.onFormSubmit = function(p_event) {
+    // todo : check at least 1 guid target
     if (false == p_event.isDefaultPrevented()) {
       self.send();
     }
@@ -510,6 +549,7 @@ function App() {
     app.service   = new ServiceTable(app);
     app.buildpack = new BuildpackTable(app);
     app.msg       = new Message(app);
+    app.preview   = new Preview(app);
 
     app.org.showTab();
   };

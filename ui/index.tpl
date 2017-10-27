@@ -1,12 +1,12 @@
 <html>
   <head>
     <title> CloudFoundry Wall Ui </title>
-
     <script src="/ui/static/bower_components/jquery/dist/jquery.min.js"></script>
     <script src="/ui/static/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="/ui/static/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="/ui/static/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
     <script src="/ui/static/bower_components/bootstrap-validator/dist/validator.js"></script>
+    <script src="/ui/static/bower_components/markdown-it/dist/markdown-it.min.js"></script>
     <script src="/ui/static/cfy-wall.js"></script>
     <link rel="stylesheet" href="/ui/static/bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/ui/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"/>
@@ -90,12 +90,20 @@
                   <div class="help-block with-errors"></div>
                 </div>
                 <div class="form-group has-feedback">
-                  <textarea style="min-height:200px;" id="message_message" class="form-control" placeholder="Markdown message..." required></textarea>
+                  <textarea style="min-height:200px;" id="message_message" class="form-control" placeholder="Markdown message..." required>
+# test title
+
+title2
+------
+</textarea>
                   <div class="help-block with-errors"></div>
                 </div>
               </form>
             </div>
-            <div role="tabpanel" class="tab-pane" id="preview">preview here</div>
+            <div role="tabpanel" class="tab-pane" id="preview">
+              <div id="md-content">
+              </div>
+            </div>
           </div>
 
           <div class="row text-center">

@@ -46,17 +46,17 @@ func NewObjectHandler(p_router *mux.Router) (ObjectHandler) {
   l_obj := ObjectHandler{}
 
   p_router.Path("/v1/orgs").
-    HandlerFunc(l_obj.GetOrgs)
+    HandlerFunc(DecorateHandler(l_obj.GetOrgs))
   p_router.Path("/v1/orgs/{guid}/spaces").
-    HandlerFunc(l_obj.GetOrgSpaces)
+    HandlerFunc(DecorateHandler(l_obj.GetOrgSpaces))
   p_router.Path("/v1/spaces").
-    HandlerFunc(l_obj.GetSpaces)
+    HandlerFunc(DecorateHandler(l_obj.GetSpaces))
   p_router.Path("/v1/users").
-    HandlerFunc(l_obj.GetUsers)
+    HandlerFunc(DecorateHandler(l_obj.GetUsers))
   p_router.Path("/v1/buildpacks").
-    HandlerFunc(l_obj.GetBuildpacks)
+    HandlerFunc(DecorateHandler(l_obj.GetBuildpacks))
   p_router.Path("/v1/services").
-    HandlerFunc(l_obj.GetServices)
+    HandlerFunc(DecorateHandler(l_obj.GetServices))
 
   return l_obj
 }

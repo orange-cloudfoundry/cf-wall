@@ -26,7 +26,7 @@ func WriteJsonError(p_writer http.ResponseWriter, p_status int, p_code int, p_er
   WriteJson(p_writer, l_err)
 }
 
-func panicHandler(p_res http.ResponseWriter, p_req *http.Request) {
+func handlePanic(p_res http.ResponseWriter, p_req *http.Request) {
   switch l_err := recover().(type) {
   case nil:
   case HttpError:
@@ -36,9 +36,9 @@ func panicHandler(p_res http.ResponseWriter, p_req *http.Request) {
   }
 }
 
-func DecorateHandler(p_func HttpHandler, p_decorator HttpHandler) (HttpHandler) {
+func DecorateHandler(p_func HttpHandler) (HttpHandler) {
   return func(p_res http.ResponseWriter, p_req *http.Request) {
-    p_decorator(p_res, p_req)
+    defer handlePanic(p_res, p_req)
     p_func(p_res, p_req)
   }
 }
