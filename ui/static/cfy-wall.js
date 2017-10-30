@@ -31,8 +31,9 @@ function Api(p_app) {
       type : "GET"
     }).
       done(function(p_data) { p_callback(p_data) }).
-      fail(function()       {
-        p_app.showError("error on api endpoint : " + p_endpoint);
+      fail(function(p_data) {
+        p_app.addError("api error " + p_endpoint)
+        p_app.addError("   -> " + p_data.responseText);
         p_callback([]);
       });
   };
@@ -46,14 +47,15 @@ function Api(p_app) {
       dataType:"json"
     }).
       done(function(p_data) { p_callback(p_data) }).
-      fail(function()       {
-        p_app.showError("error on api endpoint : " + p_endpoint);
+      fail(function(p_data) {
+        p_app.addError("api error " + p_endpoint);
+        p_app.addError("   -> " + p_data.responseText);
       });
   };
 
   self.postMessage = function(p_data) {
     self.postJson("/v1/message", p_data, function(p_out) {
-      p_app.showMessage(JSON.stringify(p_out));
+      p_app.addError(JSON.stringify(p_out));
     });
   };
 
@@ -79,80 +81,71 @@ function Api(p_app) {
 };
 
 
-function Preview(p_app) {
-    var self = this;
-
-
-    self.md = window.markdownit();
-    console.log(self.md);
-
-    self.ui = {
-        page : $("#md-content"),
-        preview  : $('a[href="#preview"]')
-    };
-
-    self.setContent = function(p_str) {
-        var l_content = self.md.render(p_str);
-        self.ui.page.html(l_content);
-    };
-
-    self.onTabClick = function() {
-        var l_val = p_app.msg.getContent();
-        self.setContent(l_val);
-    };
-
-    self.bind = function() {
-        self.ui.preview.click(self.onTabClick);
-    };
-
-    self.init = function() {
-        self.bind();
-    };
-
-
-    self.init();
-};
-
 function Message(p_app) {
   var self = this;
 
+  self.md = window.markdownit();
+
   self.ui = {
-    form    : $("#form"),
-    send    : $("#send"),
-    subject : $("#message_subject"),
-    message : $("#message_message")
+    send: $("#msg_send"),
+    msg:  {
+      form:    $("#msg_form"),
+      subject: $("#msg_subject"),
+      content: $("#msg_content")
+    },
+    preview: {
+      content: $("#msg_preview"),
+      tab:     $('a[href="#preview"]')
+    }
   };
 
-  self.getContent = function() {
-      return self.ui.message.val();
+  self.setPreviewContent = function(p_str) {
+    var l_content = self.md.render(p_str);
+    self.ui.preview.content.html(l_content);
+  };
+
+  self.getMsgContent = function() {
+      return self.ui.msg.content.val();
+  };
+
+  self.onPreviewClick = function() {
+    var l_val = self.getMsgContent();
+    self.setPreviewContent(l_val);
   };
 
   self.onSendClick = function() {
-    self.ui.form.submit();
+    self.ui.msg.form.submit();
+  };
+
+  self.onFormSubmit = function(p_event) {
+    return self.send();
+  };
+
+  self.send = function() {
+    if (false == p_app.targets.validate())
+      return false;
+
+    var l_data = p_app.targets.getTargetData();
+    l_data["subject"] = self.ui.msg.subject.val();
+    l_data["message"] = self.ui.msg.content.val();
+    p_app.api.postMessage(l_data);
+    return false;
   };
 
   self.bind = function() {
     self.ui.send.click(self.onSendClick);
-  };
-
-  self.onFormSubmit = function(p_event) {
-    // todo : check at least 1 guid target
-    if (false == p_event.isDefaultPrevented()) {
-      self.send();
-    }
-    return false;
-  };
-
-  self.send = function() {
-    var l_data = p_app.targets.getTargetData();
-    l_data["subject"] = self.ui.subject.val();
-    l_data["message"] = self.ui.message.val();
-    p_app.api.postMessage(l_data);
+    self.ui.preview.tab.click(self.onPreviewClick);
   };
 
   self.init = function() {
-    self.ui.form.validator();
-    self.ui.form.on("submit", self.onFormSubmit);
+    self.ui.msg.form.validate({
+      errorClass: "text-danger",
+      invalidHandler: function() {
+        p_app.targets.validate();
+      },
+      submitHandler: self.onFormSubmit
+    });
+
     self.bind();
   };
 
@@ -164,12 +157,31 @@ function Targets(p_app) {
   var self = this;
 
   self.ui = {
-    accordion  : $("#targets"),
-    orgs       : $("#target_orgs"),
-    spaces     : $("#target_spaces"),
-    services   : $("#target_services"),
-    buildpacks : $("#target_buildpacks"),
-    users      : $("#target_users")
+    accordion  : $("#tgt"),
+    orgs       : $("#tgt-orgs"),
+    spaces     : $("#tgt-spaces"),
+    services   : $("#tgt-services"),
+    buildpacks : $("#tgt-buildpacks"),
+    users      : $("#tgt-users"),
+    error      : $("#tgt-error")
+  };
+
+
+  self.validate = function() {
+    if ($("button[data-id]", self.ui.accordion).length) {
+      self.hideError();
+      return true;
+    }
+    self.showError();
+    return false;
+  };
+
+  self.hideError = function() {
+    self.ui.error.hide();
+  };
+
+  self.showError = function() {
+    self.ui.error.show();
   };
 
   self.getTargetData = function() {
@@ -200,11 +212,13 @@ function Targets(p_app) {
   self.removeTarget = function(p_el) {
     p_el.remove();
     self.updateBadges();
+    self.validate();
   };
 
   self.createObject = function(p_type, p_id, p_name) {
     var l_item = $("<li/>", {
-      "data-target" : p_id
+      "data-target": p_id,
+      "class":       "list-group-item"
     });
     var l_el = templateEl($("#tpl-target"), {
       name : p_name,
@@ -227,17 +241,25 @@ function Targets(p_app) {
       l_el.append(l_item);
       $('[data-toggle="tooltip"]', l_el).tooltip();
     }
-    l_el.collapse("show");
+
+    l_el.parent().collapse("show");
     self.updateBadges();
+    self.validate();
   };
 
   self.updateBadges = function() {
-    $("li.panel", self.ui.accordion).each(function() {
+    $("div.panel", self.ui.accordion).each(function() {
       var l_badge = $(".label", $(this));
-      var l_items = $('ul li', $(this));
+      var l_items = $('ul.list-group li', $(this));
       l_badge.html(l_items.length);
     });
   };
+
+  self.init = function() {
+    self.hideError();
+  };
+
+  self.init();
 }
 
 function GenericTable(self, p_name, p_app) {
@@ -245,7 +267,7 @@ function GenericTable(self, p_name, p_app) {
 
   self.ui    = {
     table : $("#" + p_name + "_table"),
-    tab   : $('a[href="#'+ p_name + '"]', p_app.ui.tabs),
+    tab   : $('a[href="#'+ p_name + '"]', $("#app-tabs")),
     tab_content : $("#" + p_name),
     filter : undefined
   };
@@ -320,6 +342,7 @@ function OrgTable(p_app) {
     $("button.org_filter", org.ui.table).click(org.onSpaceBtnClick);
     $("button.add_item",   org.ui.table).click(function() {
       p_app.targets.addTarget("orgs", $(this).data("id"), $(this).data("name"));
+      $(this).blur();
     });
   };
 
@@ -329,7 +352,6 @@ function OrgTable(p_app) {
 
   org.init();
 }
-
 
 
 function SpaceTable(p_app) {
@@ -374,6 +396,7 @@ function SpaceTable(p_app) {
     $('[data-toggle="tooltip"]').tooltip();
     $("button.add_item",   space.ui.table).click(function() {
       p_app.targets.addTarget("spaces", $(this).data("id"), $(this).data("name"));
+      $(this).blur();
     });
   };
 
@@ -383,6 +406,7 @@ function SpaceTable(p_app) {
 
   space.init();
 }
+
 
 function UserTable(p_app) {
   var user = this;
@@ -415,6 +439,7 @@ function UserTable(p_app) {
     $('[data-toggle="tooltip"]').tooltip();
     $("button.add_item",   user.ui.table).click(function() {
       p_app.targets.addTarget("users", $(this).data("id"), $(this).data("name"));
+      $(this).blur();
     });
   };
 
@@ -424,6 +449,7 @@ function UserTable(p_app) {
 
   user.init();
 }
+
 
 function ServiceTable(p_app) {
   var service = this;
@@ -456,6 +482,7 @@ function ServiceTable(p_app) {
     $('[data-toggle="tooltip"]').tooltip();
     $("button.add_item",   service.ui.table).click(function() {
       p_app.targets.addTarget("services", $(this).data("id"), $(this).data("name"));
+      $(this).blur();
     });
   };
 
@@ -465,6 +492,7 @@ function ServiceTable(p_app) {
 
   service.init();
 }
+
 
 function BuildpackTable(p_app) {
   var buildpack = this;
@@ -497,6 +525,7 @@ function BuildpackTable(p_app) {
     $('[data-toggle="tooltip"]').tooltip();
     $("button.add_item",   buildpack.ui.table).click(function() {
       p_app.targets.addTarget("buildpacks", $(this).data("id"), $(this).data("name"));
+      $(this).blur();
     });
   };
 
@@ -507,26 +536,24 @@ function BuildpackTable(p_app) {
   buildpack.init();
 }
 
+
 function App() {
   var app = this;
 
-  app.errors = [];
-
-  app.showMessage = function(p_message) {
-    alert(p_message);
-    // todo
+  self.errors = [];
+  self.ui = {
+    modal:   $("#app-errors"),
+    content: $("#app-errors-content")
   };
 
-  app.showError = function(p_error) {
-    app.errors.push(p_error);
-    // todo
+  self.addError = function(p_error) {
+    console.log(p_error);
+    self.errors.push($("<div/>").text(p_error).html());
+    self.ui.content.html(self.errors.join("<br/>"));
+    self.ui.modal.modal('show');
   };
 
-  app.ui = {
-    tabs : $("#object-tabs")
-  };
-
-  app.dtAutoFilter = function(p_table) {
+  self.dtAutoFilter = function(p_table) {
     p_table.columns().every(function() {
       var l_col = this;
       $('input', this.footer()).on('keyup change', function() {
@@ -539,20 +566,31 @@ function App() {
     });
   };
 
-
-  app.init = function() {
-    app.targets   = new Targets(app);
-    app.api       = new Api(app);
-    app.org       = new OrgTable(app);
-    app.space     = new SpaceTable(app);
-    app.user      = new UserTable(app);
-    app.service   = new ServiceTable(app);
-    app.buildpack = new BuildpackTable(app);
-    app.msg       = new Message(app);
-    app.preview   = new Preview(app);
-
-    app.org.showTab();
+  self.onModalHidden = function() {
+    self.errors = [];
   };
 
-  app.init();
+  self.bind = function() {
+    self.ui.modal.on("hidden.bs.modal", self.onModalHidden);
+  };
+
+  self.init = function() {
+    self.ui.modal.modal({
+      "show" : false
+    });
+    self.bind();
+
+    self.targets   = new Targets(self);
+    self.api       = new Api(self);
+    self.org       = new OrgTable(self);
+    self.space     = new SpaceTable(self);
+    self.user      = new UserTable(self);
+    self.service   = new ServiceTable(self);
+    self.buildpack = new BuildpackTable(self);
+    self.msg       = new Message(self);
+
+    self.org.showTab();
+  };
+
+  self.init();
 }

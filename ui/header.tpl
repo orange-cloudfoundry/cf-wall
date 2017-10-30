@@ -31,16 +31,9 @@
             </li>
             <li role="separator" class="divider"></li>
             <li>
-              <a href="#">
+              <a href="https://github.com/orange-cloudfoundry/cfy-wall">
                 <span class="fa fa-code-fork"></span>
-                Fork me on github
-              </a>
-            </li>
-            <li role="separator" class="divider"></li>
-            <li>
-              <a href="#">
-                <span class="glyphicon glyphicon-off"></span>
-                Logout
+                View it on github
               </a>
             </li>
           </ul>
