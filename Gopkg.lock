@@ -62,12 +62,6 @@
   version = "v1.4.2"
 
 [[projects]]
-  name = "github.com/go-gomail/gomail"
-  packages = ["."]
-  revision = "41f3572897373c5538c50a2402db15db079fa4fd"
-  version = "2.0.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/golang-commonmark/markdown"
   packages = [".","byteutil","html","linkify"]
@@ -232,6 +226,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "13964b1d3a0bd55f760cde4e5732f5ca48fe25e0b6b8a403670bd8641719f658"
+  inputs-digest = "711ce97bac2abeb58e92752d0a2c5e07da91d6dac0fde64e316c28bba8d3bc6a"
   solver-name = "gps-cdcl"
   solver-version = 1
