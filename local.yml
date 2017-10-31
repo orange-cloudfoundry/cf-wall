@@ -3,5 +3,5 @@ services:
   - name: smtp-service
     tags: [smtp]
     credentials:
-      host: smtp.redacted-domain.org
+      host: ****
       port: 25
