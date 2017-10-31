@@ -3,5 +3,5 @@ services:
   - name: smtp-service
     tags: [smtp]
     credentials:
-      host: gateway01.mail.s0.p.fti.net
+      host: ****
       port: 25
