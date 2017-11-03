@@ -31,7 +31,7 @@ func NewUaaCli(pConf *AppConfig) (*UaaCli, error) {
 		UaaEndpoint:  pConf.UaaEndPoint,
 	}
 
-	lCli, lErr := uaaclient.NewClient(lager.NewLogger("cfy-wall"), lConf, clock.NewClock())
+	lCli, lErr := uaaclient.NewClient(lager.NewLogger("cf-wall"), lConf, clock.NewClock())
 	if lErr != nil {
 		log.WithError(lErr).Error("unable to create uaa client", lErr)
 		return nil, lErr
