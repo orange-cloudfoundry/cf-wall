@@ -25,15 +25,35 @@ function template(p_el, p_vars, p_callback, p_str) {
 function Api(p_app) {
   var self = this;
 
+  self.token = undefined;
+
+
+  self.apiError = function(p_endpoint, p_data) {
+    var l_text = "<empty>";
+    var l_status = p_data.status + " " + p_data.statusText;
+    if (p_data.responseText.length) {
+      l_text = p_data.responseText;
+    }
+    p_app.addError("api error " + p_endpoint);
+    p_app.addError("   -> (" + l_status + ") : " + l_text);
+  };
+
+  self.init = function(p_callback) {
+    self.get("/auth/user_info", function(p_data) {
+      self.token = p_data["token"];
+      p_callback();
+    });
+  };
+
   self.get = function(p_endpoint, p_callback) {
     $.ajax({
       url : p_endpoint,
-      type : "GET"
+      type : "GET",
+      headers: { "Authorization" : self.token }
     }).
-      done(function(p_data) { p_callback(p_data) }).
+      done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
-        p_app.addError("api error " + p_endpoint)
-        p_app.addError("   -> " + p_data.responseText);
+        self.apiError(p_endpoint, p_data);
         p_callback([]);
       });
   };
@@ -44,19 +64,17 @@ function Api(p_app) {
       data: JSON.stringify(p_data),
       type : "POST",
       contentType:"application/json; charset=utf-8",
-      dataType:"json"
+      dataType:"json",
+      headers: { "Authorization" : self.token }
     }).
-      done(function(p_data) { p_callback(p_data) }).
+      done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
-        p_app.addError("api error " + p_endpoint);
-        p_app.addError("   -> " + p_data.responseText);
+        self.apiError(p_endpoint, p_data);
       });
   };
 
-  self.postMessage = function(p_data) {
-    self.postJson("/v1/message", p_data, function(p_out) {
-      p_app.addError(JSON.stringify(p_out));
-    });
+  self.postMessage = function(p_data, p_callback) {
+    self.postJson("/v1/message", p_data, p_callback);
   };
 
   self.getOrgs = function(p_callback) {
@@ -121,6 +139,13 @@ function Message(p_app) {
     return self.send();
   };
 
+  self.onMailSent = function(p_data) {
+    p_app.addMessage("Message successfully sent to :");
+    $.each(p_data["emails"], function(c_idx, c_val) {
+      p_app.addMessage(c_val);
+    });
+  };
+
   self.send = function() {
     if (false == p_app.targets.validate())
       return false;
@@ -128,7 +153,7 @@ function Message(p_app) {
     var l_data = p_app.targets.getTargetData();
     l_data["subject"] = self.ui.msg.subject.val();
     l_data["message"] = self.ui.msg.content.val();
-    p_app.api.postMessage(l_data);
+    p_app.api.postMessage(l_data, self.onMailSent);
     return false;
   };
 
@@ -307,10 +332,10 @@ function GenericTable(self, p_name, p_app) {
 
 
 function OrgTable(p_app) {
-  var org = this;
-  GenericTable(org, "orgs", p_app);
+  var self = this;
+  GenericTable(self, "orgs", p_app);
 
-  org.initTable = function(p_data) {
+  self.initTable = function(p_data) {
     var l_cols = [
         {
           "data"      : "name",
@@ -328,44 +353,44 @@ function OrgTable(p_app) {
           "className" : "text-center"
         }
     ];
-    org.createTable(p_data, l_cols, org.bind);
+    self.createTable(p_data, l_cols, self.bind);
   };
 
-  org.onSpaceBtnClick = function() {
+  self.onSpaceBtnClick = function() {
     var l_id = $(this).data("id");
     p_app.space.showTab();
     p_app.space.filterOrg(l_id);
   };
 
-  org.bind = function() {
+  self.bind = function() {
     $('[data-toggle="tooltip"]').tooltip();
-    $("button.org_filter", org.ui.table).click(org.onSpaceBtnClick);
-    $("button.add_item",   org.ui.table).click(function() {
+    $("button.org_filter", self.ui.table).click(self.onSpaceBtnClick);
+    $("button.add_item",   self.ui.table).click(function() {
       p_app.targets.addTarget("orgs", $(this).data("id"), $(this).data("name"));
       $(this).blur();
     });
   };
 
-  org.init = function() {
-    p_app.api.getOrgs(org.initTable);
+  self.init = function() {
+    p_app.api.getOrgs(self.initTable);
   };
 
-  org.init();
+  self.init();
 }
 
 
 function SpaceTable(p_app) {
-  var space = this;
+  var self = this;
 
-  GenericTable(space, "spaces", p_app);
+  GenericTable(self, "spaces", p_app);
 
-  space.filterOrg = function(p_data) {
-    space.ui.filter.val(p_data);
-    space.dtable.search(p_data);
-    space.dtable.draw();
+  self.filterOrg = function(p_data) {
+    self.ui.filter.val(p_data);
+    self.dtable.search(p_data);
+    self.dtable.draw();
   };
 
-  space.initTable = function(p_data) {
+  self.initTable = function(p_data) {
     var l_cols = [
         {
           "data"      : "name",
@@ -389,31 +414,31 @@ function SpaceTable(p_app) {
           "className" : "text-center"
         }
     ];
-    space.createTable(p_data, l_cols, space.bind);
+    self.createTable(p_data, l_cols, self.bind);
   };
 
-  space.bind = function() {
+  self.bind = function() {
     $('[data-toggle="tooltip"]').tooltip();
-    $("button.add_item",   space.ui.table).click(function() {
+    $("button.add_item",   self.ui.table).click(function() {
       p_app.targets.addTarget("spaces", $(this).data("id"), $(this).data("name"));
       $(this).blur();
     });
   };
 
-  space.init = function() {
-    p_app.api.getSpaces(space.initTable);
+  self.init = function() {
+    p_app.api.getSpaces(self.initTable);
   };
 
-  space.init();
+  self.init();
 }
 
 
 function UserTable(p_app) {
-  var user = this;
+  var self = this;
 
-  GenericTable(user, "users", p_app);
+  GenericTable(self, "users", p_app);
 
-  user.initTable = function(p_data) {
+  self.initTable = function(p_data) {
     var l_cols = [
         {
           "data"      : "name",
@@ -432,31 +457,31 @@ function UserTable(p_app) {
           "className" : "text-center"
         }
     ];
-    user.createTable(p_data, l_cols, user.bind);
+    self.createTable(p_data, l_cols, self.bind);
   };
 
-  user.bind = function() {
+  self.bind = function() {
     $('[data-toggle="tooltip"]').tooltip();
-    $("button.add_item",   user.ui.table).click(function() {
+    $("button.add_item",   self.ui.table).click(function() {
       p_app.targets.addTarget("users", $(this).data("id"), $(this).data("name"));
       $(this).blur();
     });
   };
 
-  user.init = function() {
-    p_app.api.getUsers(user.initTable);
+  self.init = function() {
+    p_app.api.getUsers(self.initTable);
   };
 
-  user.init();
+  self.init();
 }
 
 
 function ServiceTable(p_app) {
-  var service = this;
+  var self = this;
 
-  GenericTable(service, "services", p_app);
+  GenericTable(self, "services", p_app);
 
-  service.initTable = function(p_data) {
+  self.initTable = function(p_data) {
     var l_cols = [
         {
           "data"      : "name",
@@ -475,31 +500,31 @@ function ServiceTable(p_app) {
           "className" : "text-center"
         }
     ];
-    service.createTable(p_data, l_cols, service.bind);
+    self.createTable(p_data, l_cols, self.bind);
   };
 
-  service.bind = function() {
+  self.bind = function() {
     $('[data-toggle="tooltip"]').tooltip();
-    $("button.add_item",   service.ui.table).click(function() {
+    $("button.add_item",   self.ui.table).click(function() {
       p_app.targets.addTarget("services", $(this).data("id"), $(this).data("name"));
       $(this).blur();
     });
   };
 
-  service.init = function() {
-    p_app.api.getServices(service.initTable);
+  self.init = function() {
+    p_app.api.getServices(self.initTable);
   };
 
-  service.init();
+  self.init();
 }
 
 
 function BuildpackTable(p_app) {
-  var buildpack = this;
+  var self = this;
 
-  GenericTable(buildpack, "buildpacks", p_app);
+  GenericTable(self, "buildpacks", p_app);
 
-  buildpack.initTable = function(p_data) {
+  self.initTable = function(p_data) {
     var l_cols = [
         {
           "data"      : "name",
@@ -518,22 +543,22 @@ function BuildpackTable(p_app) {
           "className" : "text-center"
         }
     ];
-    buildpack.createTable(p_data, l_cols, buildpack.bind);
+    self.createTable(p_data, l_cols, self.bind);
   };
 
-  buildpack.bind = function() {
+  self.bind = function() {
     $('[data-toggle="tooltip"]').tooltip();
-    $("button.add_item",   buildpack.ui.table).click(function() {
+    $("button.add_item",   self.ui.table).click(function() {
       p_app.targets.addTarget("buildpacks", $(this).data("id"), $(this).data("name"));
       $(this).blur();
     });
   };
 
-  buildpack.init = function() {
-    p_app.api.getBuildpacks(buildpack.initTable);
+  self.init = function() {
+    p_app.api.getBuildpacks(self.initTable);
   };
 
-  buildpack.init();
+  self.init();
 }
 
 
@@ -541,16 +566,30 @@ function App() {
   var app = this;
 
   self.errors = [];
+  self.msg    = [];
+
   self.ui = {
-    modal:   $("#app-errors"),
-    content: $("#app-errors-content")
+    error : {
+      modal:   $("#app-errors"),
+      content: $("#app-errors-content")
+    },
+    msg : {
+      modal:   $("#app-msg"),
+      content: $("#app-msg-content")
+    }
   };
 
   self.addError = function(p_error) {
     console.log(p_error);
     self.errors.push($("<div/>").text(p_error).html());
-    self.ui.content.html(self.errors.join("<br/>"));
-    self.ui.modal.modal('show');
+    self.ui.error.content.html(self.errors.join("<br/>"));
+    self.ui.error.modal.modal('show');
+  };
+
+  self.addMessage = function(p_msg) {
+    self.msg.push($("<div/>").text(p_msg).html());
+    self.ui.msg.content.html(self.msg.join("<br/>"));
+    self.ui.msg.modal.modal('show');
   };
 
   self.dtAutoFilter = function(p_table) {
@@ -566,30 +605,37 @@ function App() {
     });
   };
 
-  self.onModalHidden = function() {
+  self.onErrorModalHidden = function() {
     self.errors = [];
   };
 
-  self.bind = function() {
-    self.ui.modal.on("hidden.bs.modal", self.onModalHidden);
+  self.onMsgModalHidden = function() {
+    self.msg = [];
   };
 
-  self.init = function() {
-    self.ui.modal.modal({
-      "show" : false
-    });
-    self.bind();
+  self.bind = function() {
+    self.ui.error.modal.on("hidden.bs.modal", self.onErrorModalHidden);
+    self.ui.msg.modal.on("hidden.bs.modal", self.onMsgModalHidden);
+  };
 
-    self.targets   = new Targets(self);
-    self.api       = new Api(self);
+  self.initTables = function() {
     self.org       = new OrgTable(self);
     self.space     = new SpaceTable(self);
     self.user      = new UserTable(self);
     self.service   = new ServiceTable(self);
     self.buildpack = new BuildpackTable(self);
-    self.msg       = new Message(self);
-
     self.org.showTab();
+  };
+
+  self.init = function() {
+    self.ui.error.modal.modal({ "show" : false });
+    self.ui.msg.modal.modal({ "show" : false });
+    self.bind();
+
+    self.targets = new Targets(self);
+    self.message = new Message(self);
+    self.api     = new Api(self);
+    self.api.init(self.initTables);
   };
 
   self.init();

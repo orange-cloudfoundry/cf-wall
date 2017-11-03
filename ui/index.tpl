@@ -99,25 +99,22 @@
               <br/>
               <form id="msg_form" role="form">
                 <div class="form-group">
-                  <input type="text" class="form-control" id="msg_subject" placeholder="Subject..." required>
+                  <input name="subject" type="text" class="required form-control" id="msg_subject" placeholder="Subject...">
                 </div>
                 <div class="form-group has-feedback">
-                  <textarea style="min-height:200px;" id="msg_content" class="form-control" placeholder="Markdown message..." required>
-# test title
-
-title2
-------
-                  </textarea>
+                  <textarea style="min-height:200px;" id="msg_content" name="message" class="required form-control" placeholder="Markdown message..."></textarea>
                 </div>
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="preview">
+              <br/>
               <div id="msg_preview">
               </div>
             </div>
           </div>
 
           <div class="row">
+            <br/>
             <button id="msg_send" class="btn btn-success btn-large col-xs-2 col-xs-offset-5">
               <span class="glyphicon glyphicon-envelope pull-left"></span>
               Send
@@ -137,6 +134,19 @@ title2
             <h4 class="modal-title">API Errors</h4>
           </div>
           <div class="modal-body" id='app-errors-content'>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id='app-msg' class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header alert-success">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Messages</h4>
+          </div>
+          <div class="modal-body" id='app-msg-content'>
           </div>
         </div>
       </div>

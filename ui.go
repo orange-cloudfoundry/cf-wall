@@ -11,59 +11,59 @@ type UiHandler struct {
 	Tpl *template.Template
 }
 
-func NewUiHandler(p_router *mux.Router) UiHandler {
-	l_tpl, l_err := createTemplates()
-	if l_err != nil {
+func NewUiHandler(pRouter *mux.Router) UiHandler {
+	lTpl, lErr := createTemplates()
+	if lErr != nil {
 		os.Exit(1)
 	}
 
-	l_obj := UiHandler{Tpl: l_tpl}
-	p_router.PathPrefix("/ui/static/").
+	lObj := UiHandler{Tpl: lTpl}
+	pRouter.PathPrefix("/ui/static/").
 		Handler(http.StripPrefix("/ui/static/", http.FileServer(http.Dir("ui/static"))))
-	p_router.HandleFunc("/ui", DecorateHandler(l_obj.HandlerRequest))
+	pRouter.HandleFunc("/ui", DecorateHandler(lObj.HandlerRequest))
 
-	return l_obj
+	return lObj
 }
 
 func createTemplates() (*template.Template, error) {
-	l_funcMap := map[string]interface{}{
+	lFuncMap := map[string]interface{}{
 		"mkSlice": mkSlice,
 		"mkDict":  mkDict,
 	}
 
-	l_tpl, l_err := template.New("index.tpl").
-		Funcs(template.FuncMap(l_funcMap)).
+	lTpl, lErr := template.New("index.tpl").
+		Funcs(template.FuncMap(lFuncMap)).
 		ParseFiles("ui/index.tpl", "ui/header.tpl", "ui/table.tpl", "ui/accordion.tpl")
 
-	if l_err != nil {
-		log.WithError(l_err).Error("unable to parse ui template")
-		return nil, l_err
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to parse ui template")
+		return nil, lErr
 	}
-	return l_tpl, nil
+	return lTpl, nil
 
 }
 
 func (self *UiHandler) reloadTempaltes() error {
-	l_tpl, l_err := createTemplates()
-	if l_err != nil {
-		return l_err
+	lTpl, lErr := createTemplates()
+	if lErr != nil {
+		return lErr
 	}
-	self.Tpl = l_tpl
+	self.Tpl = lTpl
 	return nil
 }
 
-func (self *UiHandler) HandlerRequest(p_res http.ResponseWriter, p_req *http.Request) {
+func (self *UiHandler) HandlerRequest(pRes http.ResponseWriter, pReq *http.Request) {
 	if GApp.Config.ReloadTemplates {
-		l_err := self.reloadTempaltes()
-		if l_err != nil {
-			p_res.Write([]byte(l_err.Error()))
+		lErr := self.reloadTempaltes()
+		if lErr != nil {
+			pRes.Write([]byte(lErr.Error()))
 		}
 	}
 
-	l_err := self.Tpl.Execute(p_res, nil)
-	if l_err != nil {
-		log.WithError(l_err).Error("unable to render ui template")
-		p_res.Write([]byte(l_err.Error()))
+	lErr := self.Tpl.Execute(pRes, nil)
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to render ui template")
+		pRes.Write([]byte(lErr.Error()))
 	}
 }
 

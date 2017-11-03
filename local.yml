@@ -5,3 +5,8 @@ services:
     credentials:
       host: smtp.redacted-domain.org
       port: 25
+
+  - name: cfy-wall-config
+    tags: []
+    credentials:
+      log-level: warning

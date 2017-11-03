@@ -1,78 +1,60 @@
 package main
 
-import "flag"
-import "os"
-import "fmt"
-import "encoding/json"
-import "code.cloudfoundry.org/lager"
+import     "flag"
+import     "os"
+import     "fmt"
+import     "strconv"
+import     "reflect"
+import     "errors"
+import     "encoding/json"
+import log "github.com/sirupsen/logrus"
+import     "github.com/cloudfoundry-community/gautocloud"
+import     "github.com/cloudfoundry-community/gautocloud/connectors/generic"
 
 type AppConfig struct {
 	ConfigFile      string
-	UaaClientName   string  `json:"uaa-client"`
-	UaaClientSecret string  `json:"uaa-secret"`
-	UaaEndPoint     string  `json:"uaa-url"`
-	CCEndPoint      string  `json:"cc-url"`
-	CCToken         string  `json:"cc-override-token"`
-	HttpCert        string  `json:"http-cert"`
-	HttpKey         string  `json:"http-key"`
-	HttpPort        int     `json:"http-port"`
-	LogLevel        string  `json:"log-level"`
-	LogName         string  `json:"log-name"`
-	MailFrom        string  `json:"mail-from"`
-	ReloadTemplates bool    `json:"reload-templates"`
+	UaaClientName   string  `json:"uaa-client"        cloud:"uaa-client"`
+	UaaClientSecret string  `json:"uaa-secret"        cloud:"uaa-secret"`
+	UaaEndPoint     string  `json:"uaa-url"           cloud:"uaa-url"`
+	CCEndPoint      string  `json:"cc-url"            cloud:"cc-url"`
+	HttpCert        string  `json:"http-cert"         cloud:"http-cert"`
+	HttpKey         string  `json:"http-key"          cloud:"http-key"`
+	HttpPort        int     `json:"http-port"         cloud:"http-port"`
+	LogLevel        string  `json:"log-level"         cloud:"log-level"`
+	MailFrom        string  `json:"mail-from"         cloud:"mail-from"`
+	ReloadTemplates bool    `json:"reload-templates"  cloud:"reload-templates"`
 }
 
-
-func NewLogger(p_level string) lager.Logger {
-	l_res := lager.NewLogger("cfy-wall")
-	l_level := lager.ERROR
-	switch p_level {
-	case "debug":
-		l_level = lager.DEBUG
-	case "info":
-		l_level = lager.INFO
-	case "error":
-		l_level = lager.ERROR
-	case "fatal":
-		l_level = lager.FATAL
-	}
-
-	l_sink := lager.NewWriterSink(os.Stdout, l_level)
-	l_res.RegisterSink(l_sink)
-	return l_res
-}
 
 func NewAppConfig() AppConfig {
-	l_conf := AppConfig{
+	lConf := AppConfig{
 		ConfigFile:      "",
 		UaaClientName:   "cfy-wall",
 		UaaClientSecret: "password",
 		UaaEndPoint:     "https://uaa.example.com",
 		CCEndPoint:      "https://api.example.com",
-		CCToken:         "",
 		HttpCert:        "",
 		HttpKey:         "",
-		HttpPort:        443,
+		HttpPort:        80,
 		LogLevel:        "error",
-		LogName:         "cfy-wall",
 		MailFrom:        "cfy-wall@localhost",
 		ReloadTemplates: false,
 	}
-	l_conf.parseArgs()
-	return l_conf
+	lConf.parseArgs()
+	return lConf
 }
 
 func (self *AppConfig) parseConfig() {
-	l_file, l_err := os.Open(self.ConfigFile)
-	if l_err != nil {
+	lFile, lErr := os.Open(self.ConfigFile)
+	if lErr != nil {
 		fmt.Printf("unable to read configuration file '%s'", self.ConfigFile)
 		os.Exit(1)
 	}
 
-	l_decoder := json.NewDecoder(l_file)
-	l_err = l_decoder.Decode(&self)
-	if l_err != nil {
-		fmt.Printf("unable to parse file '%s' : %s", self.ConfigFile, l_err.Error())
+	lDecoder := json.NewDecoder(lFile)
+	lErr = lDecoder.Decode(self)
+	if lErr != nil {
+		fmt.Printf("unable to parse file '%s' : %s", self.ConfigFile, lErr.Error())
 		os.Exit(1)
 	}
 }
@@ -83,25 +65,79 @@ func (self *AppConfig) parseCmdLine() {
 	flag.StringVar (&self.UaaClientName,   "uaa-secret",        self.UaaClientName,   "UAA client secret")
 	flag.StringVar (&self.UaaEndPoint,     "uaa-url",           self.UaaEndPoint,     "UAA API endpoint url")
 	flag.StringVar (&self.CCEndPoint,      "cc-url",            self.CCEndPoint,      "Cloud Controller API endpoint url")
-	flag.StringVar (&self.CCToken,         "cc-override-token", self.CCToken,         "Override token used to communicates with Cloud Controller")
 	flag.StringVar (&self.HttpCert,        "http-cert",         self.HttpCert,        "Web server SSL certificate path (leave empty for http)")
 	flag.StringVar (&self.HttpKey,         "http-key",          self.HttpKey,         "Web server SSL server key (leave empty for http)")
 	flag.IntVar    (&self.HttpPort,        "http-port",         self.HttpPort,        "Web server port")
 	flag.StringVar (&self.LogLevel,        "log-level",         self.LogLevel,        "Logger verbosity level")
-	flag.StringVar (&self.LogName,         "log-Name",          self.LogName,         "Logger component name")
 	flag.StringVar (&self.MailFrom,        "mail-from",         self.MailFrom,        "Mail From: address")
 	flag.BoolVar   (&self.ReloadTemplates, "reload-templates",  self.ReloadTemplates, "Reload ui template on each request (dev)")
 	flag.Parse()
 }
 
 func (self *AppConfig) parseArgs() {
+	// 1.
 	self.parseCmdLine()
 	if "" != self.ConfigFile {
 		self.parseConfig()
-		flag.Parse()
+	}
+
+	// 2.
+	var lTmp AppConfig
+	lErr := gautocloud.Inject(&lTmp)
+	if lErr != nil {
+		log.WithError(lErr).Warn("unable to load gautocloud config")
+	}
+	mergeObject(self, &lTmp)
+
+	// 3.
+	flag.Parse()
+
+	lPort := os.Getenv("PORT")
+	if 0 != len(lPort) {
+		lVal, lErr := strconv.Atoi(lPort)
+		if nil != lErr {
+			log.WithError(lErr).Error("invalid PORT env variable")
+			os.Exit(1)
+		}
+		self.HttpPort = lVal
 	}
 }
 
+func mergeObject(pRef interface{}, pData interface{}) (error) {
+	lType    := reflect.TypeOf(pRef)
+	if lType != reflect.TypeOf(pData) {
+		return errors.New("type mismatch")
+	}
+
+	lRefVal  := reflect.ValueOf(pRef)
+	lDataVal := reflect.ValueOf(pData)
+
+	if lType.Kind() == reflect.Ptr {
+		lRefVal  = lRefVal.Elem()
+		lDataVal = lDataVal.Elem()
+	}
+
+	for cIdx := 0; cIdx < lRefVal.NumField(); cIdx++ {
+		lRefField  := lRefVal.Field(cIdx)
+		lDataField := lDataVal.Field(cIdx)
+		lFieldType := lDataField.Type()
+
+		if lFieldType.Comparable() {
+			lZeroValue := reflect.Zero(lFieldType).Interface()
+			lDataValue := lDataField.Interface()
+			if lDataValue != lZeroValue {
+				lRefField.Set(lDataField)
+			}
+		} else {
+			lRefField.Set(lDataField)
+		}
+	}
+	return nil
+}
+
+func init() {
+	gautocloud.RegisterConnector(generic.NewConfigGenericConnector(AppConfig{}))
+}
 
 // Local Variables:
 // ispell-local-dictionary: "american"

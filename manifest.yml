@@ -1,0 +1,8 @@
+---
+applications:
+  - name: cfy-wall
+    memory: 256M
+    instances: 1
+    buildpack: go_buildpack
+    env:
+      GOPACKAGENAME: github.com/orange-cloudfoundry/cfy-wall

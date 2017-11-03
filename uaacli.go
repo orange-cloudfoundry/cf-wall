@@ -24,22 +24,22 @@ type UaaUser struct {
 	Email     string `json:"email"`
 }
 
-func NewUaaCli(p_conf *AppConfig) (*UaaCli, error) {
-	l_conf := &uaaconfig.Config{
-		ClientName:   p_conf.UaaClientName,
-		ClientSecret: p_conf.UaaClientSecret,
-		UaaEndpoint:  p_conf.UaaEndPoint,
+func NewUaaCli(pConf *AppConfig) (*UaaCli, error) {
+	lConf := &uaaconfig.Config{
+		ClientName:   pConf.UaaClientName,
+		ClientSecret: pConf.UaaClientSecret,
+		UaaEndpoint:  pConf.UaaEndPoint,
 	}
 
-	l_cli, l_err := uaaclient.NewClient(lager.NewLogger("cfy-wall"), l_conf, clock.NewClock())
-	if l_err != nil {
-		log.WithError(l_err).Error("unable to create uaa client", l_err)
-		return nil, l_err
+	lCli, lErr := uaaclient.NewClient(lager.NewLogger("cfy-wall"), lConf, clock.NewClock())
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to create uaa client", lErr)
+		return nil, lErr
 	}
 
 	return &UaaCli{
-		Client: l_cli,
-		Config: p_conf,
+		Client: lCli,
+		Config: pConf,
 		Token:  "",
 	}, nil
 }
@@ -47,57 +47,57 @@ func NewUaaCli(p_conf *AppConfig) (*UaaCli, error) {
 func (self *UaaCli) ensureToken() error {
 	if self.Token == "" {
 		log.Info("fetching client token from UAA api")
-		l_tok, l_err := self.Client.FetchToken(true)
-		if l_err != nil {
-			log.WithError(l_err).Error("unable to fetch UAA client token")
-			return l_err
+		lTok, lErr := self.Client.FetchToken(true)
+		if lErr != nil {
+			log.WithError(lErr).Error("unable to fetch UAA client token")
+			return lErr
 		}
-		self.Token = l_tok.AccessToken
+		self.Token = lTok.AccessToken
 	}
 	return nil
 }
 
-func (self *UaaCli) sendRequest(p_url *url.URL) (*http.Response, error) {
-	if l_err := self.ensureToken(); l_err != nil {
-		return nil, l_err
+func (self *UaaCli) sendRequest(pUrl *url.URL) (*http.Response, error) {
+	if lErr := self.ensureToken(); lErr != nil {
+		return nil, lErr
 	}
 
-	l_httpCli := http.Client{}
+	lHttpCli := http.Client{}
 
-	l_headers := http.Header{}
-	l_headers.Add("Authorization", fmt.Sprintf("bearer %s", self.Token))
-	l_headers.Add("Accept", "application/json")
+	lHeaders := http.Header{}
+	lHeaders.Add("Authorization", fmt.Sprintf("bearer %s", self.Token))
+	lHeaders.Add("Accept", "application/json")
 
-	l_req := &http.Request{
+	lReq := &http.Request{
 		Method: "GET",
-		URL:    p_url,
-		Header: l_headers,
+		URL:    pUrl,
+		Header: lHeaders,
 	}
 
 	log.WithFields(log.Fields{
-		"url": p_url,
+		"url": pUrl,
 	}).Info("sending request to UAA api")
-	l_res, l_err := l_httpCli.Do(l_req)
-	if l_err != nil {
-		log.WithError(l_err).WithFields(log.Fields{
-			"url": p_url,
+	lRes, lErr := lHttpCli.Do(lReq)
+	if lErr != nil {
+		log.WithError(lErr).WithFields(log.Fields{
+			"url": pUrl,
 		}).Error("error while sending request to UAA api")
-		return nil, l_err
+		return nil, lErr
 	}
 
 	log.WithFields(log.Fields{
-		"url":      p_url,
-		"response": l_res,
+		"url":      pUrl,
+		"response": lRes,
 	}).Debug("got UAA api response")
 
-	if l_res.StatusCode != 200 {
-		log.WithError(l_err).WithFields(log.Fields{
-			"url": p_url,
+	if lRes.StatusCode != 200 {
+		log.WithError(lErr).WithFields(log.Fields{
+			"url": pUrl,
 		}).Error("error while sending request to UAA api")
 		return nil, errors.New("uaa-client-request")
 	}
 
-	return l_res, nil
+	return lRes, nil
 }
 
 type userListUaaResponse struct {
@@ -117,48 +117,48 @@ type userListUaaResponse struct {
 	} `json:"resources"`
 }
 
-func (self *UaaCli) getUserListIndex(p_idx int) (*userListUaaResponse, error) {
+func (self *UaaCli) getUserListIndex(pIdx int) (*userListUaaResponse, error) {
 	log.WithFields(log.Fields{
-		"index":  p_idx,
+		"index":  pIdx,
 		"fields": "id,emails,name,active",
 	}).Debug("requesting UAA users index")
 
-	l_urlfmt := "%s/Users?startIndex=%d&count=%d&attributes=id,emails,name,active"
-	l_urlstr := fmt.Sprintf(l_urlfmt, self.Config.UaaEndPoint, p_idx, 500)
-	l_url, _ := url.Parse(l_urlstr)
+	lUrlfmt := "%s/Users?startIndex=%d&count=%d&attributes=id,emails,name,active"
+	lUrlstr := fmt.Sprintf(lUrlfmt, self.Config.UaaEndPoint, pIdx, 500)
+	lUrl, _ := url.Parse(lUrlstr)
 
-	l_res, l_err := self.sendRequest(l_url)
-	if l_err != nil {
-		return nil, l_err
+	lRes, lErr := self.sendRequest(lUrl)
+	if lErr != nil {
+		return nil, lErr
 	}
 
-	l_decoder := json.NewDecoder(l_res.Body)
-	l_data := userListUaaResponse{}
-	l_err = l_decoder.Decode(&l_data)
-	if l_err != nil {
-		log.WithError(l_err).Error("unexpected UAA api user list response format")
-		return nil, l_err
+	lDecoder := json.NewDecoder(lRes.Body)
+	lData := userListUaaResponse{}
+	lErr = lDecoder.Decode(&lData)
+	if lErr != nil {
+		log.WithError(lErr).Error("unexpected UAA api user list response format")
+		return nil, lErr
 	}
 
 	log.WithFields(log.Fields{
-		"reponse": l_data,
+		"reponse": lData,
 	}).Debug("UAA api users response")
 
-	return &l_data, nil
+	return &lData, nil
 }
 
-func append_users(p_users *[]UaaUser, p_uaaUsers *userListUaaResponse) {
-	for _, c_el := range p_uaaUsers.Resources {
-		if c_el.Active {
-			l_user := UaaUser{
-				Id:        c_el.Id,
-				FirstName: c_el.Name.FirstName,
-				LastName:  c_el.Name.LastName,
+func append_users(pUsers *[]UaaUser, pUaaUsers *userListUaaResponse) {
+	for _, cEl := range pUaaUsers.Resources {
+		if cEl.Active {
+			lUser := UaaUser{
+				Id:        cEl.Id,
+				FirstName: cEl.Name.FirstName,
+				LastName:  cEl.Name.LastName,
 			}
-			if len(c_el.Emails) != 0 {
-				l_user.Email = c_el.Emails[0].Value
+			if len(cEl.Emails) != 0 {
+				lUser.Email = cEl.Emails[0].Value
 			}
-			*p_users = append(*p_users, l_user)
+			*pUsers = append(*pUsers, lUser)
 		}
 	}
 }
@@ -166,22 +166,22 @@ func append_users(p_users *[]UaaUser, p_uaaUsers *userListUaaResponse) {
 func (self *UaaCli) GetUserList() ([]UaaUser, error) {
 	log.Info("requesting users on UAA api")
 
-	l_res := make([]UaaUser, 0)
-	l_first, l_err := self.getUserListIndex(0)
-	if l_err != nil {
-		return l_res, l_err
+	lRes := make([]UaaUser, 0)
+	lFirst, lErr := self.getUserListIndex(0)
+	if lErr != nil {
+		return lRes, lErr
 	}
-	append_users(&l_res, l_first)
+	append_users(&lRes, lFirst)
 
-	for c_idx := l_first.ItemsPerPage; c_idx < l_first.TotalResults; c_idx += l_first.ItemsPerPage {
-		l_list, l_err := self.getUserListIndex(c_idx)
-		if l_err != nil {
-			return l_res, l_err
+	for cIdx := lFirst.ItemsPerPage; cIdx < lFirst.TotalResults; cIdx += lFirst.ItemsPerPage {
+		lList, lErr := self.getUserListIndex(cIdx)
+		if lErr != nil {
+			return lRes, lErr
 		}
-		append_users(&l_res, l_list)
+		append_users(&lRes, lList)
 	}
 
-	return l_res, nil
+	return lRes, nil
 }
 
 // Local Variables:
