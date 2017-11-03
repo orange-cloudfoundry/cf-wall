@@ -1,9 +1,9 @@
 {
-  "name": "cfy-wall-ui",
+  "name": "cf-wall-ui",
   "authors": [
     "Xavier MARCELET <xavier@marcelet.com>"
   ],
-  "description": "UI for cfy-wall api tool",
+  "description": "UI for cf-wall api tool",
   "main": "index.tpl",
   "license": "MIT",
   "homepage": "",

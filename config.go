@@ -29,7 +29,7 @@ type AppConfig struct {
 func NewAppConfig() AppConfig {
 	lConf := AppConfig{
 		ConfigFile:      "",
-		UaaClientName:   "cfy-wall",
+		UaaClientName:   "cf-wall",
 		UaaClientSecret: "password",
 		UaaEndPoint:     "https://uaa.example.com",
 		CCEndPoint:      "https://api.example.com",
@@ -37,7 +37,7 @@ func NewAppConfig() AppConfig {
 		HttpKey:         "",
 		HttpPort:        80,
 		LogLevel:        "error",
-		MailFrom:        "cfy-wall@localhost",
+		MailFrom:        "cf-wall@localhost",
 		ReloadTemplates: false,
 	}
 	lConf.parseArgs()
