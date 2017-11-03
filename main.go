@@ -50,10 +50,16 @@ func main() {
 	initLogger("warning")
 
 	r := mux.NewRouter()
+
 	GApp            = NewApp()
 	GUiHandler      = NewUiHandler(r)
 	GObjectHandler  = NewObjectHandler(r)
 	GMessageHandler = NewMessageHandler(&GApp, r)
+
+	r.Path("/").
+		HandlerFunc(DecorateHandler(func(pRes http.ResponseWriter, pReq *http.Request) {
+		http.Redirect(pRes, pReq, "/ui", http.StatusMovedPermanently)
+	}))
 
 	if ("" != GApp.Config.HttpCert) && ("" != GApp.Config.HttpKey) {
 		log.WithFields(log.Fields{
