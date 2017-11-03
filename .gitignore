@@ -4,3 +4,4 @@ ui/static/bower_components/*
 vendor/*
 ui/static/token.js
 .env.json
+local.yml
