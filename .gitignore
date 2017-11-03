@@ -1,7 +1,7 @@
 cfy-wall
-config/cfy-wall.json
-ui/static/bower_components/*
-vendor/*
-ui/static/token.js
 .env.json
-local.yml
+config/cfy-wall.json
+config/local.yml
+ui/static/bower_components/*
+ui/static/token.js
+vendor/*

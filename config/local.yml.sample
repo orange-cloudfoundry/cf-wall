@@ -3,9 +3,8 @@ services:
   - name: smtp-service
     tags: [smtp]
     credentials:
-      host: ****
+      host: mail.example.com
       port: 25
-
   - name: cfy-wall-config
     tags: []
     credentials:
