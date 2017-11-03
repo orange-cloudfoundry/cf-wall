@@ -1,13 +1,12 @@
 {
-  "cc-override-token" : "",
-  "cc-url"            : "https://api.redacted-domain.org",
+  "cc-url"            : "https://api.cloudfoundry.example.com",
   "http-cert"         : "./config/server.crt",
   "http-key"          : "./config/server.key",
-  "http-port"         : 8888,
-  "log-level"         : "debug",
+  "http-port"         : 8080,
+  "log-level"         : "error",
   "uaa-client"        : "cfy-wall",
   "uaa-secret"        : "password",
-  "uaa-url"           : "https://uaa.redacted-domain.org",
-  "mail-from"         : "cfy@production.com"
+  "uaa-url"           : "https://api.uaa.example.com",
+  "mail-from"         : "cf-run@example.com"
 }
 
