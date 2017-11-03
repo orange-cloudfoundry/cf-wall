@@ -4,5 +4,8 @@ applications:
     memory: 256M
     instances: 1
     buildpack: go_buildpack
+    services:
+      - cf-wall-config
+      - cf-wall-smtp
     env:
       GOPACKAGENAME: github.com/orange-cloudfoundry/cf-wall
