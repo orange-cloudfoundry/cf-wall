@@ -1,11 +1,11 @@
-app_name: "cfy-wall"
+app_name: "cf-wall"
 services:
   - name: smtp-service
     tags: [smtp]
     credentials:
       host: mail.example.com
       port: 25
-  - name: cfy-wall-config
+  - name: cf-wall-config
     tags: []
     credentials:
       log-level: warning

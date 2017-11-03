@@ -1,4 +1,5 @@
 .env.json
-config/cfy-wall.json
-cfy-wall
-local.yml
+config/cf-wall.json
+config/local.yml
+cf-wall
+
