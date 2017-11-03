@@ -8,7 +8,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="/ui">cfy-wall</a>
+      <a class="navbar-brand" href="/ui">cf-wall</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
@@ -31,7 +31,7 @@
             </li>
             <li role="separator" class="divider"></li>
             <li>
-              <a href="https://github.com/orange-cloudfoundry/cfy-wall">
+              <a href="https://github.com/orange-cloudfoundry/cf-wall">
                 <span class="fa fa-code-fork"></span>
                 View it on github
               </a>

@@ -4,7 +4,7 @@
   "http-key"          : "./config/server.key",
   "http-port"         : 8080,
   "log-level"         : "error",
-  "uaa-client"        : "cfy-wall",
+  "uaa-client"        : "cf-wall",
   "uaa-secret"        : "password",
   "uaa-url"           : "https://api.uaa.example.com",
   "mail-from"         : "cf-run@example.com"

@@ -1,6 +1,6 @@
-cfy-wall
+cf-wall
 .env.json
-config/cfy-wall.json
+config/cf-wall.json
 config/local.yml
 ui/static/bower_components/*
 ui/static/token.js
