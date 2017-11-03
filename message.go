@@ -41,109 +41,111 @@ type MessageResponse struct {
 	Message string   `json:"message"`
 }
 
-func NewMessageHandler(p_app *App, p_router *mux.Router) MessageHandler {
-	l_obj := MessageHandler{
-		UaaCli: p_app.UaaCli,
+func NewMessageHandler(pApp *App, pRouter *mux.Router) MessageHandler {
+	lObj := MessageHandler{
+		UaaCli: pApp.UaaCli,
 	}
 
-	p_router.Path("/v1/message").
-		HandlerFunc(DecorateHandler(l_obj.HandleMessage)).
+	pRouter.Path("/v1/message").
+		HandlerFunc(DecorateHandler(lObj.HandleMessage)).
 		HeadersRegexp("Content-Type", "application/json.*").
 		Methods("POST")
 
-	return l_obj
+	return lObj
 }
 
-func (self *MessageHandler) createCtx(p_users map[string]string, p_req *http.Request) (*MessageReqCtx, error) {
-	l_cccli, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		log.WithError(l_err).Error("unable to create CC client")
-		return nil, l_err
+func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Request) (*MessageReqCtx, error) {
+	lCccli, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to create CC client")
+		return nil, lErr
 	}
 
-	l_ctx := MessageReqCtx{
-		CCCli:     l_cccli,
-		UserMails: p_users,
+	lCtx := MessageReqCtx{
+		CCCli:     lCccli,
+		UserMails: pUsers,
 		ReqData:   MessageRequest{},
 		ResData:   MessageResponse{},
 	}
 
-	l_decoder := json.NewDecoder(p_req.Body)
-	l_err = l_decoder.Decode(&l_ctx.ReqData)
-	if l_err != nil {
-		return nil, l_err
+	lDecoder := json.NewDecoder(pReq.Body)
+	lErr = lDecoder.Decode(&lCtx.ReqData)
+	if lErr != nil {
+		return nil, lErr
 	}
 
-	return &l_ctx, nil
+	return &lCtx, nil
 }
 
 func (self *MessageHandler) getUaaUsers() (map[string]string, error) {
-	l_res := make(map[string]string, 0)
+	lRes := make(map[string]string, 0)
 	log.Debug("reading UAA users")
-	l_users, l_err := self.UaaCli.GetUserList()
-	if l_err != nil {
-		log.WithError(l_err).Error("unable to featch UAA users")
-		return l_res, l_err
+	lUsers, lErr := self.UaaCli.GetUserList()
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to featch UAA users")
+		return lRes, lErr
 	}
-	for _, c_el := range l_users {
-		l_res[c_el.Id] = c_el.Email
+	for _, cEl := range lUsers {
+		lRes[cEl.Id] = cEl.Email
 	}
-	return l_res, nil
+	return lRes, nil
 }
 
-func (self *MessageHandler) HandleMessage(p_res http.ResponseWriter, p_req *http.Request) {
-	l_users, l_err := self.getUaaUsers()
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.Request) {
+	lUsers, lErr := self.getUaaUsers()
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
-	l_ctx, l_err := self.createCtx(l_users, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+	lCtx, lErr := self.createCtx(lUsers, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
-	l_ctx.process()
+	lCtx.process()
 
-	// self.sendMessage(
-	// 	GApp.Config.MailFrom,
-	// 	l_ctx.ResData.Emails,
-	// 	l_ctx.ReqData.Subject,
-	// 	l_ctx.ResData.Message)
+	self.sendMessage(
+		GApp.Config.MailFrom,
+		lCtx.ResData.Emails,
+		lCtx.ReqData.Subject,
+		lCtx.ResData.Message)
 
-	WriteJson(p_res, l_ctx.ResData)
+	WriteJson(pRes, lCtx.ResData)
 }
 
 func (self *MessageHandler) sendMessage(
-	p_from string,
-	p_to []string,
-	p_subject string,
-	p_content string) {
+	pFrom string,
+	pTo []string,
+	pSubject string,
+	pContent string) {
 
-	var l_opts smtptype.Smtp
-	l_err := gautocloud.Inject(&l_opts)
-	if l_err != nil {
-		l_uerr := errors.New("unable to get smtp settings")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 500, 20})
+	var lOpts smtptype.Smtp
+	lErr := gautocloud.Inject(&lOpts)
+	if lErr != nil {
+		lUerr := errors.New("unable to get smtp settings")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 500, 20})
 	}
+	log.WithFields(log.Fields{"smtp": lOpts}).
+		Debug("fetched settings from gautocloud")
 
-	l_dialer := gomail.NewPlainDialer(
-		l_opts.Host,
-		l_opts.Port,
-		l_opts.User,
-		l_opts.Password)
+	lDialer := gomail.NewPlainDialer(
+		lOpts.Host,
+		lOpts.Port,
+		lOpts.User,
+		lOpts.Password)
 
-	l_msg := gomail.NewMessage()
-	l_msg.SetHeader("From", p_from)
-	l_msg.SetHeader("To", p_to...)
-	l_msg.SetHeader("Subject", p_subject)
-	l_msg.SetBody("text/html", p_content)
+	lMsg := gomail.NewMessage()
+	lMsg.SetHeader("From", pFrom)
+	lMsg.SetHeader("To", pTo...)
+	lMsg.SetHeader("Subject", pSubject)
+	lMsg.SetBody("text/html", pContent)
 
-	l_err = l_dialer.DialAndSend(l_msg)
-	if l_err != nil {
-		l_uerr := errors.New("unable to send mail")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 500, 20})
+	lErr = lDialer.DialAndSend(lMsg)
+	if lErr != nil {
+		lUerr := errors.New("unable to send mail")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 500, 20})
 	}
 }
 
@@ -154,91 +156,91 @@ func (self *MessageReqCtx) process() {
 	// TODO: addServices
 	// TODO: addBuidPack
 
-	l_mk   := markdown.New(markdown.XHTMLOutput(true), markdown.Nofollow(true))
-	l_html := l_mk.RenderToString([]byte(self.ReqData.Message))
-	self.ResData.Message = l_html
+	lMk   := markdown.New(markdown.XHTMLOutput(true), markdown.Nofollow(true))
+	lHtml := lMk.RenderToString([]byte(self.ReqData.Message))
+	self.ResData.Message = lHtml
 }
 
-func (self *MessageReqCtx) addOrgs(p_orgs []string) {
-	if len(p_orgs) == 0 {
+func (self *MessageReqCtx) addOrgs(pOrgs []string) {
+	if len(pOrgs) == 0 {
 		return
 	}
 
-	l_users := self.getOrgsUsers(p_orgs)
-	for _, c_el := range l_users {
-		self.addUser(c_el.Guid)
+	lUsers := self.getOrgsUsers(pOrgs)
+	for _, cEl := range lUsers {
+		self.addUser(cEl.Guid)
 	}
 }
 
-func (self *MessageReqCtx) addSpaces(p_spaces []string) {
-	if 0 == len(p_spaces) {
+func (self *MessageReqCtx) addSpaces(pSpaces []string) {
+	if 0 == len(pSpaces) {
 		return
 	}
 
-	l_users := self.getSpacesUsers(p_spaces)
-	for _, c_el := range l_users {
-		self.addUser(c_el.Guid)
+	lUsers := self.getSpacesUsers(pSpaces)
+	for _, cEl := range lUsers {
+		self.addUser(cEl.Guid)
 	}
 }
 
-func (self *MessageReqCtx) addUsers(p_users []string) {
-	if 0 == len(p_users) {
+func (self *MessageReqCtx) addUsers(pUsers []string) {
+	if 0 == len(pUsers) {
 		return
 	}
-	for _, c_id := range p_users {
-		self.addUser(c_id)
+	for _, cId := range pUsers {
+		self.addUser(cId)
 	}
 }
 
-func (self *MessageReqCtx) addUser(p_guid string) {
-	l_mail, l_ok := self.UserMails[p_guid]
-	if l_ok {
-		self.ResData.Emails = append(self.ResData.Emails, l_mail)
+func (self *MessageReqCtx) addUser(pGuid string) {
+	lMail, lOk := self.UserMails[pGuid]
+	if lOk {
+		self.ResData.Emails = append(self.ResData.Emails, lMail)
 	}
 }
 
-func (self *MessageReqCtx) addBuidPack(p_guid string) {
+func (self *MessageReqCtx) addBuidPack(pGuid string) {
 	// todo
 }
 
-func (self *MessageReqCtx) addService(p_guid string) {
+func (self *MessageReqCtx) addService(pGuid string) {
 	// todo
 }
 
-func (self *MessageReqCtx) getOrgsUsers(p_list []string) cfclient.Users {
-	l_orgs := strings.Join(p_list, ",")
-	l_query := url.Values{}
-	l_query.Add("q", fmt.Sprintf("organization_guid IN %s", l_orgs))
+func (self *MessageReqCtx) getOrgsUsers(pList []string) cfclient.Users {
+	lOrgs := strings.Join(pList, ",")
+	lQuery := url.Values{}
+	lQuery.Add("q", fmt.Sprintf("organization_guid IN %s", lOrgs))
 
-	log.WithFields(log.Fields{"orgs": l_orgs}).
+	log.WithFields(log.Fields{"orgs": lOrgs}).
 		Debug("reading org users")
 
-	l_users, l_err := self.CCCli.ListUsersByQuery(l_query)
-	if l_err != nil {
-		l_uerr := errors.New("unable to fetch users from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_err, 500, 20})
+	lUsers, lErr := self.CCCli.ListUsersByQuery(lQuery)
+	if lErr != nil {
+		lUerr := errors.New("unable to fetch users from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lErr, 500, 20})
 	}
 
-	return l_users
+	return lUsers
 }
 
-func (self *MessageReqCtx) getSpacesUsers(p_list []string) cfclient.Users {
-	l_spaces := strings.Join(p_list, ",")
-	l_query := url.Values{}
-	l_query.Add("q", fmt.Sprintf("space_guid IN %s", l_spaces))
+func (self *MessageReqCtx) getSpacesUsers(pList []string) cfclient.Users {
+	lSpaces := strings.Join(pList, ",")
+	lQuery := url.Values{}
+	lQuery.Add("q", fmt.Sprintf("space_guid IN %s", lSpaces))
 
-	log.WithFields(log.Fields{"spaces": l_spaces}).
+	log.WithFields(log.Fields{"spaces": lSpaces}).
 		Debug("reading space users")
 
-	l_users, l_err := self.CCCli.ListUsersByQuery(l_query)
-	if l_err != nil {
-		l_uerr := errors.New("unable to fetch users from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_err, 500, 20})
+	lUsers, lErr := self.CCCli.ListUsersByQuery(lQuery)
+	if lErr != nil {
+		lUerr := errors.New("unable to fetch users from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lErr, 500, 20})
 	}
 
-	return l_users
+	return lUsers
 }
 
 // Local Variables:

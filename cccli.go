@@ -6,42 +6,38 @@ import "errors"
 import "github.com/cloudfoundry-community/go-cfclient"
 import log "github.com/sirupsen/logrus"
 
-func NewCCCliFromRequest(p_conf *AppConfig, p_req *http.Request) (*cfclient.Client, error) {
+func NewCCCliFromRequest(pConf *AppConfig, pReq *http.Request) (*cfclient.Client, error) {
 
-	l_token := p_conf.CCToken
-	if l_token == "" {
-		l_auth, l_ok := p_req.Header["Authorization"]
-		if (l_ok == false) || (len(l_auth) == 0) {
-			l_err := errors.New("Authorization header is mandatory")
-			log.WithError(l_err).Error("unable to create CC client")
-			return nil, l_err
-		}
-
-		l_parts := strings.Fields(l_auth[0])
-		if len(l_parts) < 2 {
-			l_err := errors.New("malformated Authorization header")
-			log.WithError(l_err).Error("unable to create CC client")
-			return nil, l_err
-		}
-		l_token = l_parts[1]
+	lAuth, lOk := pReq.Header["Authorization"]
+	if (lOk == false) || (len(lAuth) == 0) {
+		lErr := errors.New("Authorization header is mandatory")
+		log.WithError(lErr).Error("unable to create CC client")
+		return nil, lErr
 	}
 
-	l_cli, l_err := NewCCCli(p_conf, l_token)
-	if l_err != nil {
-		log.WithError(l_err).Error("unable to create CC client")
-		return nil, l_err
+	lParts := strings.Fields(lAuth[0])
+	if len(lParts) < 2 {
+		lErr := errors.New("malformated Authorization header")
+		log.WithError(lErr).Error("unable to create CC client")
+		return nil, lErr
 	}
 
-	return l_cli, nil
+	lCli, lErr := NewCCCli(pConf, lParts[1])
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to create CC client")
+		return nil, lErr
+	}
+
+	return lCli, nil
 }
 
-func NewCCCli(p_conf *AppConfig, p_token string) (*cfclient.Client, error) {
+func NewCCCli(pConf *AppConfig, pToken string) (*cfclient.Client, error) {
 	log.WithFields(log.Fields{
-		"endpoint": p_conf.CCEndPoint,
+		"endpoint": pConf.CCEndPoint,
 	}).Debug("creating CC client")
-	l_conf := cfclient.Config{
-		ApiAddress: p_conf.CCEndPoint,
-		Token:      p_token,
+	lConf := cfclient.Config{
+		ApiAddress: pConf.CCEndPoint,
+		Token:      pToken,
 	}
-	return cfclient.NewClient(&l_conf)
+	return cfclient.NewClient(&lConf)
 }

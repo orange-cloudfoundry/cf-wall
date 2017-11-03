@@ -16,39 +16,40 @@ type App struct {
 	UaaCli *UaaCli
 }
 
-func (self *App) initLogger() {
+func initLogger(pLevel string) {
 	log.SetFormatter(&log.TextFormatter{
 		ForceColors: true,
 	})
 	log.SetOutput(os.Stdout)
-	l_level, l_err := log.ParseLevel(self.Config.LogLevel)
-	if l_err != nil {
-		l_level = log.ErrorLevel
+	lLevel, lErr := log.ParseLevel(pLevel)
+	if lErr != nil {
+		lLevel = log.ErrorLevel
 	}
-	log.SetLevel(l_level)
+	log.SetLevel(lLevel)
 }
 
 func NewApp() App {
-	l_conf := NewAppConfig()
-	l_app := App{
-		Config: l_conf,
+	lConf := NewAppConfig()
+	lApp := App{
+		Config: lConf,
 		UaaCli: nil,
 	}
-	l_app.initLogger()
-	l_cli, l_err := NewUaaCli(&l_conf)
-	if l_err != nil {
-		log.WithError(l_err).
+	initLogger(lConf.LogLevel)
+	lCli, lErr := NewUaaCli(&lConf)
+	if lErr != nil {
+		log.WithError(lErr).
 			Error("unable to initialize uaa-client")
 		os.Exit(1)
 	}
-	l_app.UaaCli = l_cli
-	return l_app
+	lApp.UaaCli = lCli
+	return lApp
 }
 
 
 func main() {
-	r := mux.NewRouter()
+	initLogger("warning")
 
+	r := mux.NewRouter()
 	GApp            = NewApp()
 	GUiHandler      = NewUiHandler(r)
 	GObjectHandler  = NewObjectHandler(r)
@@ -72,3 +73,7 @@ func main() {
 		http.ListenAndServe(fmt.Sprintf(":%d", GApp.Config.HttpPort), r)
 	}
 }
+
+// Local Variables:
+// ispell-local-dictionary: "american"
+// End:

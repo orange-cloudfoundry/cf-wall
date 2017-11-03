@@ -5,67 +5,68 @@ import "encoding/json"
 import "net/http"
 import log "github.com/sirupsen/logrus"
 
-type HttpHandler = func(http.ResponseWriter, *http.Request)
+
 type HttpError struct {
 	Error  error
 	Status int
 	Code   int
 }
 
-func WriteJson(p_writer http.ResponseWriter, p_obj interface{}) {
-	l_val, _ := json.Marshal(p_obj)
-	p_writer.Header().Set("Content-type", "application/json")
-	p_writer.Write(l_val)
+func WriteJson(pWriter http.ResponseWriter, pObj interface{}) {
+	lVal, _ := json.Marshal(pObj)
+	pWriter.Header().Set("Content-type", "application/json")
+	pWriter.Write(lVal)
 }
 
-func WriteJsonError(p_writer http.ResponseWriter, p_status int, p_code int, p_err error) {
-	p_writer.WriteHeader(p_status)
-	l_err := struct {
+func WriteJsonError(pWriter http.ResponseWriter, pStatus int, pCode int, pErr error) {
+	pWriter.WriteHeader(pStatus)
+	lErr := struct {
 		Code  int    `json:"code"`
 		Error string `json:"error"`
-	}{p_code, p_err.Error()}
-	WriteJson(p_writer, l_err)
+	}{pCode, pErr.Error()}
+	WriteJson(pWriter, lErr)
 }
 
-func HandlePanic(p_res http.ResponseWriter, p_req *http.Request) {
-	switch l_err := recover().(type) {
+func HandlePanic(pRes http.ResponseWriter, pReq *http.Request) {
+	switch lErr := recover().(type) {
 	case nil:
 	case HttpError:
-		WriteJsonError(p_res, l_err.Status, l_err.Code, l_err.Error)
+		WriteJsonError(pRes, lErr.Status, lErr.Code, lErr.Error)
 	default:
-		WriteJsonError(p_res, 500, 20, errors.New("undefined panic type"))
+		WriteJsonError(pRes, 500, 20, errors.New("undefined panic type"))
 	}
 }
 
-func DecorateHandler(p_func HttpHandler) HttpHandler {
-	l_req     := WrapHandler(LogRequestHandler, p_func)
-	l_res     := WrapHandler(l_req, LogResponseHandler)
-	l_protect := WrapDefer(l_res, HandlePanic)
-	return l_protect
+func DecorateHandler(pFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	lReq     := WrapHandler(LogRequestHandler, pFunc)
+	lRes     := WrapHandler(lReq, LogResponseHandler)
+	lProtect := WrapDefer(lRes, HandlePanic)
+	return lProtect
 }
 
-func LogRequestHandler(p_res http.ResponseWriter, p_req *http.Request) {
+func LogRequestHandler(pRes http.ResponseWriter, pReq *http.Request) {
 	log.WithFields(log.Fields{
-		"method": p_req.Method,
-		"host":   p_req.Host,
-		"client": p_req.RemoteAddr,
-		"path":   p_req.RequestURI,
+		"method": pReq.Method,
+		"host":   pReq.Host,
+		"client": pReq.RemoteAddr,
+		"path":   pReq.RequestURI,
+		"headers": pReq.Header,
 	}).Info("handling http request")
 }
 
-func LogResponseHandler(p_res http.ResponseWriter, p_req *http.Request) {
+func LogResponseHandler(pRes http.ResponseWriter, pReq *http.Request) {
 }
 
-func WrapHandler(p_decorator HttpHandler, p_func HttpHandler) HttpHandler {
-	return func(p_res http.ResponseWriter, p_req *http.Request) {
-		p_decorator(p_res, p_req)
-		p_func(p_res, p_req)
+func WrapHandler(pDecorator func(http.ResponseWriter, *http.Request), pFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(pRes http.ResponseWriter, pReq *http.Request) {
+		pDecorator(pRes, pReq)
+		pFunc(pRes, pReq)
 	}
 }
 
-func WrapDefer(p_func HttpHandler, p_defer HttpHandler) HttpHandler {
-	return func(p_res http.ResponseWriter, p_req *http.Request) {
-		defer p_defer(p_res, p_req)
-		p_func(p_res, p_req)
+func WrapDefer(pFunc func(http.ResponseWriter, *http.Request), pDefer func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(pRes http.ResponseWriter, pReq *http.Request) {
+		defer pDefer(pRes, pReq)
+		pFunc(pRes, pReq)
 	}
 }

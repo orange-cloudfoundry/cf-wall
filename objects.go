@@ -33,185 +33,179 @@ type Service struct {
 	Id   string `json:"guid"`
 }
 
-type OrgResponse = []Org
-type SpaceResponse = []Space
-type UserResponse = []User
-type BuildpackResponse = []Buildpack
-type ServiceResponse = []Service
-
 type ObjectHandler struct {
 }
 
-func NewObjectHandler(p_router *mux.Router) ObjectHandler {
-	l_obj := ObjectHandler{}
+func NewObjectHandler(pRouter *mux.Router) ObjectHandler {
+	lObj := ObjectHandler{}
 
-	p_router.Path("/v1/orgs").
-		HandlerFunc(DecorateHandler(l_obj.getOrgs))
-	p_router.Path("/v1/orgs/{guid}/spaces").
-		HandlerFunc(DecorateHandler(l_obj.getOrgSpaces))
-	p_router.Path("/v1/spaces").
-		HandlerFunc(DecorateHandler(l_obj.getSpaces))
-	p_router.Path("/v1/users").
-		HandlerFunc(DecorateHandler(l_obj.getUsers))
-	p_router.Path("/v1/buildpacks").
-		HandlerFunc(DecorateHandler(l_obj.getBuildpacks))
-	p_router.Path("/v1/services").
-		HandlerFunc(DecorateHandler(l_obj.getServices))
+	pRouter.Path("/v1/orgs").
+		HandlerFunc(DecorateHandler(lObj.getOrgs))
+	pRouter.Path("/v1/orgs/{guid}/spaces").
+		HandlerFunc(DecorateHandler(lObj.getOrgSpaces))
+	pRouter.Path("/v1/spaces").
+		HandlerFunc(DecorateHandler(lObj.getSpaces))
+	pRouter.Path("/v1/users").
+		HandlerFunc(DecorateHandler(lObj.getUsers))
+	pRouter.Path("/v1/buildpacks").
+		HandlerFunc(DecorateHandler(lObj.getBuildpacks))
+	pRouter.Path("/v1/services").
+		HandlerFunc(DecorateHandler(lObj.getServices))
 
-	return l_obj
+	return lObj
 }
 
-func (self *ObjectHandler) getServices(p_res http.ResponseWriter, p_req *http.Request) {
-	l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+func (self *ObjectHandler) getServices(pRes http.ResponseWriter, pReq *http.Request) {
+	lApi, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
 	log.Info("reading services from CC api")
-	l_users, l_err := l_api.ListServices()
-	if l_err != nil {
-		l_uerr := errors.New("unable to read services from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 400, 10})
+	lUsers, lErr := lApi.ListServices()
+	if lErr != nil {
+		lUerr := errors.New("unable to read services from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 400, 10})
 	}
 
-	l_res := ServiceResponse{}
-	for _, c_el := range l_users {
-		l_elem := Service{c_el.Label, c_el.Guid}
-		l_res = append(l_res, l_elem)
+	lRes := []Service{}
+	for _, cEl := range lUsers {
+		lElem := Service{cEl.Label, cEl.Guid}
+		lRes = append(lRes, lElem)
 	}
-	log.WithFields(log.Fields{"services": l_res}).
+	log.WithFields(log.Fields{"services": lRes}).
 		Debug("fetched services from CC api")
-	WriteJson(p_res, l_res)
+	WriteJson(pRes, lRes)
 }
 
-func (self *ObjectHandler) getBuildpacks(p_res http.ResponseWriter, p_req *http.Request) {
-	l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+func (self *ObjectHandler) getBuildpacks(pRes http.ResponseWriter, pReq *http.Request) {
+	lApi, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
 	log.Info("reading buildpacks from CC api")
-	l_users, l_err := l_api.ListBuildpacks()
-	if l_err != nil {
-		l_uerr := errors.New("unable to read buildpacks from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 400, 10})
+	lUsers, lErr := lApi.ListBuildpacks()
+	if lErr != nil {
+		lUerr := errors.New("unable to read buildpacks from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 400, 10})
 	}
 
-	l_res := BuildpackResponse{}
-	for _, c_el := range l_users {
-		l_elem := Buildpack{c_el.Name, c_el.Guid}
-		l_res = append(l_res, l_elem)
+	lRes := []Buildpack{}
+	for _, cEl := range lUsers {
+		lElem := Buildpack{cEl.Name, cEl.Guid}
+		lRes = append(lRes, lElem)
 	}
-	log.WithFields(log.Fields{"buildpacks": l_res}).
+	log.WithFields(log.Fields{"buildpacks": lRes}).
 		Debug("fetched buildpacks from CC api")
-	WriteJson(p_res, l_res)
+	WriteJson(pRes, lRes)
 }
 
-func (self *ObjectHandler) getUsers(p_res http.ResponseWriter, p_req *http.Request) {
-	l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+func (self *ObjectHandler) getUsers(pRes http.ResponseWriter, pReq *http.Request) {
+	lApi, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
 	log.Info("reading users from CC api")
-	l_users, l_err := l_api.ListUsers()
-	if l_err != nil {
-		l_uerr := errors.New("unable to read users from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 400, 10})
+	lUsers, lErr := lApi.ListUsers()
+	if lErr != nil {
+		lUerr := errors.New("unable to read users from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 400, 10})
 	}
 
-	l_res := UserResponse{}
-	for _, c_el := range l_users {
-		l_elem := User{c_el.Username, c_el.Guid}
-		l_res = append(l_res, l_elem)
+	lRes := []User{}
+	for _, cEl := range lUsers {
+		lElem := User{cEl.Username, cEl.Guid}
+		lRes = append(lRes, lElem)
 	}
-	log.WithFields(log.Fields{"users": l_res}).
+	log.WithFields(log.Fields{"users": lRes}).
 		Debug("fetched users from CC api")
-	WriteJson(p_res, l_res)
+	WriteJson(pRes, lRes)
 }
 
-func (self *ObjectHandler) getOrgs(p_res http.ResponseWriter, p_req *http.Request) {
-	l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+func (self *ObjectHandler) getOrgs(pRes http.ResponseWriter, pReq *http.Request) {
+	lApi, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
 	log.Info("reading orgs from CC api")
-	l_orgs, l_err := l_api.ListOrgs()
-	if l_err != nil {
-		l_uerr := errors.New("unable to read organizations from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 400, 10})
+	lOrgs, lErr := lApi.ListOrgs()
+	if lErr != nil {
+		lUerr := errors.New("unable to read organizations from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 400, 10})
 	}
 
-	l_res := OrgResponse{}
-	for _, c_el := range l_orgs {
-		l_elem := Org{c_el.Name, c_el.Guid}
-		l_res = append(l_res, l_elem)
+	lRes := []Org{}
+	for _, cEl := range lOrgs {
+		lElem := Org{cEl.Name, cEl.Guid}
+		lRes = append(lRes, lElem)
 	}
 
 
-	log.WithFields(log.Fields{"orgs": l_res}).
+	log.WithFields(log.Fields{"orgs": lRes}).
 		Debug("fetched organization from CC api")
-	WriteJson(p_res, l_res)
+	WriteJson(pRes, lRes)
 }
 
-func (self *ObjectHandler) getOrgSpaces(p_res http.ResponseWriter, p_req *http.Request) {
-	l_vars := mux.Vars(p_req)
-	l_orgID := l_vars["guid"]
+func (self *ObjectHandler) getOrgSpaces(pRes http.ResponseWriter, pReq *http.Request) {
+	lVars := mux.Vars(pReq)
+	lOrgID := lVars["guid"]
 
-	l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+	lApi, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
 	log.WithFields(log.Fields{
-		"org": l_orgID,
+		"org": lOrgID,
 	}).Info("reading spaces member of org from CC api")
-	l_query := url.Values{}
-	l_query.Add("q", fmt.Sprintf("organization_guid:%s", l_orgID))
-	l_spaces, l_err := l_api.ListSpacesByQuery(l_query)
-	if l_err != nil {
-		l_uerr := errors.New("unable to read spaces from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 400, 10})
+	lQuery := url.Values{}
+	lQuery.Add("q", fmt.Sprintf("organization_guid:%s", lOrgID))
+	lSpaces, lErr := lApi.ListSpacesByQuery(lQuery)
+	if lErr != nil {
+		lUerr := errors.New("unable to read spaces from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 400, 10})
 	}
 
-	l_res := SpaceResponse{}
-	for _, c_el := range l_spaces {
-		l_elem := Space{c_el.Name, c_el.Guid, c_el.OrganizationGuid}
-		l_res = append(l_res, l_elem)
+	lRes := []Space{}
+	for _, cEl := range lSpaces {
+		lElem := Space{cEl.Name, cEl.Guid, cEl.OrganizationGuid}
+		lRes = append(lRes, lElem)
 	}
-	log.WithFields(log.Fields{"spaces": l_res}).
+	log.WithFields(log.Fields{"spaces": lRes}).
 		Debug("fetched spaces from CC api")
-	WriteJson(p_res, l_res)
+	WriteJson(pRes, lRes)
 }
 
-func (self *ObjectHandler) getSpaces(p_res http.ResponseWriter, p_req *http.Request) {
-	l_api, l_err := NewCCCliFromRequest(&GApp.Config, p_req)
-	if l_err != nil {
-		panic(HttpError{l_err, 400, 10})
+func (self *ObjectHandler) getSpaces(pRes http.ResponseWriter, pReq *http.Request) {
+	lApi, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	if lErr != nil {
+		panic(HttpError{lErr, 400, 10})
 	}
 
 	log.Info("reading spaces from CC api")
-	l_spaces, l_err := l_api.ListSpaces()
-	if l_err != nil {
-		l_uerr := errors.New("unable to read services from CC api")
-		log.WithError(l_err).Error(l_uerr.Error())
-		panic(HttpError{l_uerr, 400, 10})
+	lSpaces, lErr := lApi.ListSpaces()
+	if lErr != nil {
+		lUerr := errors.New("unable to read services from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(HttpError{lUerr, 400, 10})
 	}
 
-	l_res := SpaceResponse{}
-	for _, c_el := range l_spaces {
-		l_elem := Space{c_el.Name, c_el.Guid, c_el.OrganizationGuid}
-		l_res = append(l_res, l_elem)
+	lRes := []Space{}
+	for _, cEl := range lSpaces {
+		lElem := Space{cEl.Name, cEl.Guid, cEl.OrganizationGuid}
+		lRes = append(lRes, lElem)
 	}
-	log.WithFields(log.Fields{"spaces": l_res}).
+	log.WithFields(log.Fields{"spaces": lRes}).
 		Debug("fetched spaces from CC api")
-	WriteJson(p_res, l_res)
+	WriteJson(pRes, lRes)
 }
 
 // Local Variables:

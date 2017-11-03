@@ -5,3 +5,8 @@ services:
     credentials:
       host: gateway01.mail.s0.p.fti.net
       port: 25
+
+  - name: cfy-wall-config
+    tags: []
+    credentials:
+      log-level: warning

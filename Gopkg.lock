@@ -34,7 +34,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry-community/gautocloud"
-  packages = [".","cloudenv","connectors","connectors/smtp","connectors/smtp/client","connectors/smtp/raw","connectors/smtp/schema","connectors/smtp/smtptype","decoder","loader","loader/fake","logger"]
+  packages = [".","cloudenv","connectors","connectors/generic","connectors/smtp","connectors/smtp/client","connectors/smtp/raw","connectors/smtp/schema","connectors/smtp/smtptype","decoder","loader","loader/fake","logger"]
   revision = "1eb2d981d707325bd932dc661ca0be46d972dc56"
 
 [[projects]]
@@ -226,6 +226,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "711ce97bac2abeb58e92752d0a2c5e07da91d6dac0fde64e316c28bba8d3bc6a"
+  inputs-digest = "614c060675946f95e66979d63fd0c28517068d1efba3b4c69b29aa5245122750"
   solver-name = "gps-cdcl"
   solver-version = 1
