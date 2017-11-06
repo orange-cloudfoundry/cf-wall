@@ -18,17 +18,21 @@ func NewHttpError(pErr error, pStatus int, pCode int) HttpError {
 
 func WriteJson(pWriter http.ResponseWriter, pObj interface{}) {
 	lVal, _ := json.Marshal(pObj)
-	pWriter.Header().Set("Content-type", "application/json")
+	pWriter.Header().Set("Content-Type", "application/json")
 	pWriter.Write(lVal)
 }
 
 func WriteJsonError(pWriter http.ResponseWriter, pStatus int, pCode int, pErr error) {
-	pWriter.WriteHeader(pStatus)
 	lErr := struct {
 		Code  int    `json:"code"`
 		Error string `json:"error"`
-	}{pCode, pErr.Error()}
-	WriteJson(pWriter, lErr)
+	}{ pCode, pErr.Error() }
+
+	lVal, _ := json.Marshal(lErr)
+
+	pWriter.Header().Set("Content-Type", "application/json")
+	pWriter.WriteHeader(pStatus)
+	pWriter.Write(lVal)
 }
 
 func HandlePanic(pRes http.ResponseWriter, pReq *http.Request) {
