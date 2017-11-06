@@ -97,13 +97,13 @@ func (self *AppConfig) parseArgs() {
 		self.parseConfig()
 	}
 
-	// // 2.
-	// var lTmp AppConfig
-	// lErr := gautocloud.Inject(&lTmp)
-	// if lErr != nil {
-	// 	log.WithError(lErr).Warn("unable to load gautocloud config")
-	// }
-	// mergeObject(self, &lTmp)
+	// 2.
+	var lTmp AppConfig
+	lErr := gautocloud.Inject(&lTmp)
+	if lErr != nil {
+		log.WithError(lErr).Warn("unable to load gautocloud config")
+	}
+	mergeObject(self, &lTmp)
 
 	// 3.
 	flag.Parse()
