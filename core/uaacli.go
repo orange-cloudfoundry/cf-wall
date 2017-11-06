@@ -1,20 +1,20 @@
-package main
+package core
 
 import "net/http"
 import "net/url"
 import "fmt"
-import "errors"
 import "encoding/json"
+import "github.com/pkg/errors"
+import log "github.com/sirupsen/logrus"
 import "code.cloudfoundry.org/clock"
 import "code.cloudfoundry.org/lager"
 import uaaclient "code.cloudfoundry.org/uaa-go-client"
 import uaaconfig "code.cloudfoundry.org/uaa-go-client/config"
-import log "github.com/sirupsen/logrus"
 
 type UaaCli struct {
-	Client uaaclient.Client
-	Config *AppConfig
-	Token  string
+	Client   uaaclient.Client
+	Endpoint string
+	Token    string
 }
 
 type UaaUser struct {
@@ -33,13 +33,13 @@ func NewUaaCli(pConf *AppConfig) (*UaaCli, error) {
 
 	lCli, lErr := uaaclient.NewClient(lager.NewLogger("cf-wall"), lConf, clock.NewClock())
 	if lErr != nil {
-		log.WithError(lErr).Error("unable to create uaa client", lErr)
+		log.WithError(lErr).Error("failed to create uaaclient")
 		return nil, lErr
 	}
 
 	return &UaaCli{
 		Client: lCli,
-		Config: pConf,
+		Endpoint: pConf.UaaEndPoint,
 		Token:  "",
 	}, nil
 }
@@ -63,8 +63,8 @@ func (self *UaaCli) sendRequest(pUrl *url.URL) (*http.Response, error) {
 	}
 
 	lHttpCli := http.Client{}
-
 	lHeaders := http.Header{}
+
 	lHeaders.Add("Authorization", fmt.Sprintf("bearer %s", self.Token))
 	lHeaders.Add("Accept", "application/json")
 
@@ -77,6 +77,7 @@ func (self *UaaCli) sendRequest(pUrl *url.URL) (*http.Response, error) {
 	log.WithFields(log.Fields{
 		"url": pUrl,
 	}).Info("sending request to UAA api")
+
 	lRes, lErr := lHttpCli.Do(lReq)
 	if lErr != nil {
 		log.WithError(lErr).WithFields(log.Fields{
@@ -124,7 +125,7 @@ func (self *UaaCli) getUserListIndex(pIdx int) (*userListUaaResponse, error) {
 	}).Debug("requesting UAA users index")
 
 	lUrlfmt := "%s/Users?startIndex=%d&count=%d&attributes=id,emails,name,active"
-	lUrlstr := fmt.Sprintf(lUrlfmt, self.Config.UaaEndPoint, pIdx, 500)
+	lUrlstr := fmt.Sprintf(lUrlfmt, self.Endpoint, pIdx, 500)
 	lUrl, _ := url.Parse(lUrlstr)
 
 	lRes, lErr := self.sendRequest(lUrl)

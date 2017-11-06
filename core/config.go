@@ -1,4 +1,4 @@
-package main
+package core
 
 import     "flag"
 import     "os"
@@ -25,6 +25,17 @@ type AppConfig struct {
 	ReloadTemplates bool    `json:"reload-templates"  cloud:"reload-templates"`
 }
 
+func InitLogger(pLevel string) {
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors: true,
+	})
+	log.SetOutput(os.Stdout)
+	lLevel, lErr := log.ParseLevel(pLevel)
+	if lErr != nil {
+		lLevel = log.ErrorLevel
+	}
+	log.SetLevel(lLevel)
+}
 
 func NewAppConfig() AppConfig {
 	lConf := AppConfig{
@@ -40,9 +51,13 @@ func NewAppConfig() AppConfig {
 		MailFrom:        "cf-wall@localhost",
 		ReloadTemplates: false,
 	}
+
+	InitLogger("debug")
 	lConf.parseArgs()
+	InitLogger(lConf.LogLevel)
 	return lConf
 }
+
 
 func (self *AppConfig) parseConfig() {
 	lFile, lErr := os.Open(self.ConfigFile)
@@ -58,6 +73,7 @@ func (self *AppConfig) parseConfig() {
 		os.Exit(1)
 	}
 }
+
 
 func (self *AppConfig) parseCmdLine() {
 	flag.StringVar (&self.ConfigFile,      "config",            self.ConfigFile,      "configuration file")
@@ -81,13 +97,13 @@ func (self *AppConfig) parseArgs() {
 		self.parseConfig()
 	}
 
-	// 2.
-	var lTmp AppConfig
-	lErr := gautocloud.Inject(&lTmp)
-	if lErr != nil {
-		log.WithError(lErr).Warn("unable to load gautocloud config")
-	}
-	mergeObject(self, &lTmp)
+	// // 2.
+	// var lTmp AppConfig
+	// lErr := gautocloud.Inject(&lTmp)
+	// if lErr != nil {
+	// 	log.WithError(lErr).Warn("unable to load gautocloud config")
+	// }
+	// mergeObject(self, &lTmp)
 
 	// 3.
 	flag.Parse()
@@ -137,6 +153,7 @@ func mergeObject(pRef interface{}, pData interface{}) (error) {
 
 func init() {
 	gautocloud.RegisterConnector(generic.NewConfigGenericConnector(AppConfig{}))
+
 }
 
 // Local Variables:
