@@ -1,4 +1,4 @@
-package main
+package core
 
 import "errors"
 import "encoding/json"
@@ -10,6 +10,10 @@ type HttpError struct {
 	Error  error
 	Status int
 	Code   int
+}
+
+func NewHttpError(pErr error, pStatus int, pCode int) HttpError {
+	return HttpError{pErr, pStatus, pCode}
 }
 
 func WriteJson(pWriter http.ResponseWriter, pObj interface{}) {

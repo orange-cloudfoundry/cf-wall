@@ -34,14 +34,14 @@
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry-community/gautocloud"
-  packages = [".","cloudenv","connectors","connectors/generic","connectors/smtp","connectors/smtp/client","connectors/smtp/raw","connectors/smtp/schema","connectors/smtp/smtptype","decoder","loader","loader/fake","logger"]
-  revision = "1eb2d981d707325bd932dc661ca0be46d972dc56"
+  packages = [".","cloudenv","connectors","connectors/generic","connectors/smtp","connectors/smtp/client","connectors/smtp/raw","connectors/smtp/schema","connectors/smtp/smtptype","decoder","interceptor","loader","loader/fake","loader/loghook"]
+  revision = "e24dc9a4bf962ff555165c5d0bc5293009c83d7a"
 
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry-community/go-cfclient"
   packages = ["."]
-  revision = "8f0d96bb9f0ac0af44d6cf8fab9b36c4b50a5610"
+  revision = "62a4f5f80d3f4aa6ab5f401af63710bedc8a9089"
 
 [[projects]]
   name = "github.com/cloudfoundry-community/go-cfenv"
@@ -134,10 +134,10 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
-  version = "v1.0.3"
+  revision = "89742aefa4b206dcf400792f3bd35b542998eb3b"
 
 [[projects]]
   branch = "master"
@@ -173,13 +173,13 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "2509b142fb2b797aa7587dad548f113b2c0f20ce"
+  revision = "bd6f299fb381e4c3393d1c4b1f0b94f5e77650c8"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context","context/ctxhttp"]
-  revision = "4b14673ba32bee7f5ac0f990a48f033919fd418b"
+  revision = "01c190206fbdffa42f334f4b2bf2220f50e64920"
 
 [[projects]]
   branch = "master"
@@ -191,13 +191,13 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "0649f9fe46d917da5591af4d4784b6badd31d7e5"
+  revision = "8eb05f94d449fdf134ec24630ce69ada5b469c1c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
-  revision = "6eab0e8f74e86c598ec3b6fad4888e0c11482d48"
+  revision = "88f656faf3f37f690df1a32515b479415e1a6769"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -226,6 +226,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "614c060675946f95e66979d63fd0c28517068d1efba3b4c69b29aa5245122750"
+  inputs-digest = "018f6f34bfd91b05ad81bcb7b00bd843ef5d629a81f01c1b4d5294e9faf6d644"
   solver-name = "gps-cdcl"
   solver-version = 1

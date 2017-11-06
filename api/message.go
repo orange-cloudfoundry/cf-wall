@@ -1,4 +1,4 @@
-package main
+package api
 
 import "fmt"
 import "strings"
@@ -11,9 +11,11 @@ import "github.com/gorilla/mux"
 import "github.com/golang-commonmark/markdown"
 import log "github.com/sirupsen/logrus"
 import "github.com/cloudfoundry-community/gautocloud"
-import _ "github.com/cloudfoundry-community/gautocloud/connectors/smtp"
+import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/raw"
 import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/smtptype"
 import "gopkg.in/gomail.v2"
+import "github.com/orange-cloudfoundry/cf-wall/core"
+
 
 type MessageReqCtx struct {
 	CCCli     *cfclient.Client
@@ -23,7 +25,8 @@ type MessageReqCtx struct {
 }
 
 type MessageHandler struct {
-	UaaCli *UaaCli
+	UaaCli *core.UaaCli
+	Config *core.AppConfig
 }
 
 type MessageRequest struct {
@@ -41,21 +44,28 @@ type MessageResponse struct {
 	Message string   `json:"message"`
 }
 
-func NewMessageHandler(pApp *App, pRouter *mux.Router) MessageHandler {
+func NewMessageHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MessageHandler, error) {
+	lCli, lErr := core.NewUaaCli(pConf)
+	if lErr != nil {
+		log.WithError(lErr).Error("failed to create core UaaClient", lErr)
+		return nil, lErr
+	}
+
 	lObj := MessageHandler{
-		UaaCli: pApp.UaaCli,
+		UaaCli: lCli,
+		Config: pConf,
 	}
 
 	pRouter.Path("/v1/message").
-		HandlerFunc(DecorateHandler(lObj.HandleMessage)).
+		HandlerFunc(core.DecorateHandler(lObj.HandleMessage)).
 		HeadersRegexp("Content-Type", "application/json.*").
 		Methods("POST")
 
-	return lObj
+	return &lObj, nil
 }
 
 func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Request) (*MessageReqCtx, error) {
-	lCccli, lErr := NewCCCliFromRequest(&GApp.Config, pReq)
+	lCccli, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
 	if lErr != nil {
 		log.WithError(lErr).Error("unable to create CC client")
 		return nil, lErr
@@ -94,23 +104,23 @@ func (self *MessageHandler) getUaaUsers() (map[string]string, error) {
 func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.Request) {
 	lUsers, lErr := self.getUaaUsers()
 	if lErr != nil {
-		panic(HttpError{lErr, 400, 10})
+		panic(core.NewHttpError(lErr, 400, 10))
 	}
 
 	lCtx, lErr := self.createCtx(lUsers, pReq)
 	if lErr != nil {
-		panic(HttpError{lErr, 400, 10})
+		panic(core.NewHttpError(lErr, 400, 10))
 	}
 
 	lCtx.process()
 
 	self.sendMessage(
-		GApp.Config.MailFrom,
+		self.Config.MailFrom,
 		lCtx.ResData.Emails,
 		lCtx.ReqData.Subject,
 		lCtx.ResData.Message)
 
-	WriteJson(pRes, lCtx.ResData)
+	core.WriteJson(pRes, lCtx.ResData)
 }
 
 func (self *MessageHandler) sendMessage(
@@ -124,7 +134,7 @@ func (self *MessageHandler) sendMessage(
 	if lErr != nil {
 		lUerr := errors.New("unable to get smtp settings")
 		log.WithError(lErr).Error(lUerr.Error())
-		panic(HttpError{lUerr, 500, 20})
+		panic(core.NewHttpError(lUerr, 500, 20))
 	}
 	log.WithFields(log.Fields{"smtp": lOpts}).
 		Debug("fetched settings from gautocloud")
@@ -145,7 +155,7 @@ func (self *MessageHandler) sendMessage(
 	if lErr != nil {
 		lUerr := errors.New("unable to send mail")
 		log.WithError(lErr).Error(lUerr.Error())
-		panic(HttpError{lUerr, 500, 20})
+		panic(core.NewHttpError(lUerr, 500, 20))
 	}
 }
 
@@ -219,7 +229,7 @@ func (self *MessageReqCtx) getOrgsUsers(pList []string) cfclient.Users {
 	if lErr != nil {
 		lUerr := errors.New("unable to fetch users from CC api")
 		log.WithError(lErr).Error(lUerr.Error())
-		panic(HttpError{lErr, 500, 20})
+		panic(core.NewHttpError(lErr, 500, 20))
 	}
 
 	return lUsers
@@ -237,10 +247,15 @@ func (self *MessageReqCtx) getSpacesUsers(pList []string) cfclient.Users {
 	if lErr != nil {
 		lUerr := errors.New("unable to fetch users from CC api")
 		log.WithError(lErr).Error(lUerr.Error())
-		panic(HttpError{lErr, 500, 20})
+		panic(core.NewHttpError(lErr, 500, 20))
 	}
 
 	return lUsers
+}
+
+
+func init() {
+	gautocloud.RegisterConnector(raw.NewSmtpRawConnector())
 }
 
 // Local Variables:
