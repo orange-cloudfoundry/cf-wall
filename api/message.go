@@ -65,7 +65,7 @@ func NewMessageHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MessageHand
 }
 
 func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Request) (*MessageReqCtx, error) {
-	lCccli, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lCccli, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		log.WithError(lErr).Error("unable to create CC client")
 		return nil, lErr

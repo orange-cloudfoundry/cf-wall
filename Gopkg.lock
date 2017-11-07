@@ -34,14 +34,14 @@
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry-community/gautocloud"
-  packages = [".","cloudenv","connectors","connectors/generic","connectors/smtp","connectors/smtp/client","connectors/smtp/raw","connectors/smtp/schema","connectors/smtp/smtptype","decoder","interceptor","loader","loader/fake","loader/loghook"]
-  revision = "e24dc9a4bf962ff555165c5d0bc5293009c83d7a"
+  packages = [".","cloudenv","connectors","connectors/generic","connectors/smtp/raw","connectors/smtp/schema","connectors/smtp/smtptype","decoder","interceptor","loader","loader/fake","loader/loghook"]
+  revision = "e5c62c792541ac33b067c865a6d9966edda7caa9"
 
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry-community/go-cfclient"
   packages = ["."]
-  revision = "62a4f5f80d3f4aa6ab5f401af63710bedc8a9089"
+  revision = "b4598987a6dd6001dba489901d0e593624f00ec0"
 
 [[projects]]
   name = "github.com/cloudfoundry-community/go-cfenv"
@@ -88,8 +88,8 @@
 [[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "24fca303ac6da784b9e8269f724ddeb0b2eea5e7"
-  version = "v1.5.0"
+  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
+  version = "v1.6.0"
 
 [[projects]]
   branch = "master"
@@ -173,7 +173,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "bd6f299fb381e4c3393d1c4b1f0b94f5e77650c8"
+  revision = "687d4b818545e443c8ba223cbef20b1721afd4db"
 
 [[projects]]
   branch = "master"
@@ -185,13 +185,13 @@
   branch = "master"
   name = "golang.org/x/oauth2"
   packages = [".","clientcredentials","internal"]
-  revision = "bb50c06baba3d0c76f9d125c0719093e315b5b44"
+  revision = "9ff8ebcc8e241d46f52ecc5bff0e5a2f2dbef402"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "8eb05f94d449fdf134ec24630ce69ada5b469c1c"
+  revision = "d4266bc12aae0b4128952c889b769442fce5d2f1"
 
 [[projects]]
   branch = "master"
@@ -226,6 +226,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "018f6f34bfd91b05ad81bcb7b00bd843ef5d629a81f01c1b4d5294e9faf6d644"
+  inputs-digest = "2305b5065b9d9dda5d1e1613a6584dedddae7845e3247d8878b81fa2747bece6"
   solver-name = "gps-cdcl"
   solver-version = 1
