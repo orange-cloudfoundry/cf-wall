@@ -18,7 +18,7 @@ import "github.com/orange-cloudfoundry/cf-wall/core"
 
 
 type MessageReqCtx struct {
-	CCCli     *cfclient.Client
+	CCCli     core.CFClient
 	UserMails map[string]string
 	ReqData   MessageRequest
 	ResData   MessageResponse
@@ -104,12 +104,12 @@ func (self *MessageHandler) getUaaUsers() (map[string]string, error) {
 func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.Request) {
 	lUsers, lErr := self.getUaaUsers()
 	if lErr != nil {
-		panic(core.NewHttpError(lErr, 400, 10))
+		panic(core.NewHttpError(lErr, 500, 51))
 	}
 
 	lCtx, lErr := self.createCtx(lUsers, pReq)
 	if lErr != nil {
-		panic(core.NewHttpError(lErr, 400, 10))
+		panic(core.NewHttpError(lErr, 500, 50))
 	}
 
 	lCtx.process()
@@ -134,7 +134,7 @@ func (self *MessageHandler) sendMessage(
 	if lErr != nil {
 		lUerr := errors.New("unable to get smtp settings")
 		log.WithError(lErr).Error(lUerr.Error())
-		panic(core.NewHttpError(lUerr, 500, 20))
+		panic(core.NewHttpError(lUerr, 500, 52))
 	}
 	log.WithFields(log.Fields{"smtp": lOpts}).
 		Debug("fetched settings from gautocloud")
@@ -155,7 +155,7 @@ func (self *MessageHandler) sendMessage(
 	if lErr != nil {
 		lUerr := errors.New("unable to send mail")
 		log.WithError(lErr).Error(lUerr.Error())
-		panic(core.NewHttpError(lUerr, 500, 20))
+		panic(core.NewHttpError(lUerr, 500, 53))
 	}
 }
 
