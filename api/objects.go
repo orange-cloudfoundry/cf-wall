@@ -60,7 +60,7 @@ func NewObjectHandler(pConf *core.AppConfig, pRouter *mux.Router) *ObjectHandler
 }
 
 func (self *ObjectHandler) getServices(pRes http.ResponseWriter, pReq *http.Request) {
-	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 400, 10))
 	}
@@ -84,7 +84,7 @@ func (self *ObjectHandler) getServices(pRes http.ResponseWriter, pReq *http.Requ
 }
 
 func (self *ObjectHandler) getBuildpacks(pRes http.ResponseWriter, pReq *http.Request) {
-	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 400, 10))
 	}
@@ -108,7 +108,7 @@ func (self *ObjectHandler) getBuildpacks(pRes http.ResponseWriter, pReq *http.Re
 }
 
 func (self *ObjectHandler) getUsers(pRes http.ResponseWriter, pReq *http.Request) {
-	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 400, 10))
 	}
@@ -132,7 +132,7 @@ func (self *ObjectHandler) getUsers(pRes http.ResponseWriter, pReq *http.Request
 }
 
 func (self *ObjectHandler) getOrgs(pRes http.ResponseWriter, pReq *http.Request) {
-	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 400, 10))
 	}
@@ -161,7 +161,7 @@ func (self *ObjectHandler) getOrgSpaces(pRes http.ResponseWriter, pReq *http.Req
 	lVars := mux.Vars(pReq)
 	lOrgID := lVars["guid"]
 
-	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 400, 10))
 	}
@@ -189,7 +189,7 @@ func (self *ObjectHandler) getOrgSpaces(pRes http.ResponseWriter, pReq *http.Req
 }
 
 func (self *ObjectHandler) getSpaces(pRes http.ResponseWriter, pReq *http.Request) {
-	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq)
+	lApi, lErr := core.NewCCCliFromRequest(self.Config.CCEndPoint, pReq, self.Config.CCSkipVerify)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 400, 10))
 	}

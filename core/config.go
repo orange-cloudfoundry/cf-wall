@@ -16,7 +16,9 @@ type AppConfig struct {
 	UaaClientName   string  `json:"uaa-client"        cloud:"uaa-client"`
 	UaaClientSecret string  `json:"uaa-secret"        cloud:"uaa-secret"`
 	UaaEndPoint     string  `json:"uaa-url"           cloud:"uaa-url"`
+	UaaSkipVerify   bool    `json:"uaa-skip-verify"   cloud:"uaa-skip-verify"`
 	CCEndPoint      string  `json:"cc-url"            cloud:"cc-url"`
+	CCSkipVerify    bool    `json:"cc-skip-verify"    cloud:"cc-skip-verify"`
 	HttpCert        string  `json:"http-cert"         cloud:"http-cert"`
 	HttpKey         string  `json:"http-key"          cloud:"http-key"`
 	HttpPort        int     `json:"http-port"         cloud:"http-port"`
@@ -42,8 +44,10 @@ func NewAppConfig() AppConfig {
 		ConfigFile:      "",
 		UaaClientName:   "cf-wall",
 		UaaClientSecret: "password",
+		UaaSkipVerify:   false,
 		UaaEndPoint:     "https://uaa.example.com",
 		CCEndPoint:      "https://api.example.com",
+		CCSkipVerify:    false,
 		HttpCert:        "",
 		HttpKey:         "",
 		HttpPort:        80,
@@ -80,7 +84,9 @@ func (self *AppConfig) parseCmdLine() {
 	flag.StringVar (&self.UaaClientName,   "uaa-client",        self.UaaClientName,   "UAA client ID")
 	flag.StringVar (&self.UaaClientName,   "uaa-secret",        self.UaaClientName,   "UAA client secret")
 	flag.StringVar (&self.UaaEndPoint,     "uaa-url",           self.UaaEndPoint,     "UAA API endpoint url")
+	flag.BoolVar   (&self.UaaSkipVerify,   "uaa-skip-verify",   self.UaaSkipVerify,   "Do not verify UAA SSL certificates")
 	flag.StringVar (&self.CCEndPoint,      "cc-url",            self.CCEndPoint,      "Cloud Controller API endpoint url")
+	flag.BoolVar   (&self.CCSkipVerify,    "cc-skip-verify",    self.CCSkipVerify,    "Do not verify Cloud Controller SSL certificates")
 	flag.StringVar (&self.HttpCert,        "http-cert",         self.HttpCert,        "Web server SSL certificate path (leave empty for http)")
 	flag.StringVar (&self.HttpKey,         "http-key",          self.HttpKey,         "Web server SSL server key (leave empty for http)")
 	flag.IntVar    (&self.HttpPort,        "http-port",         self.HttpPort,        "Web server port")
@@ -97,13 +103,13 @@ func (self *AppConfig) parseArgs() {
 		self.parseConfig()
 	}
 
-	// // 2.
-	// var lTmp AppConfig
-	// lErr := gautocloud.Inject(&lTmp)
-	// if lErr != nil {
-	// 	log.WithError(lErr).Warn("unable to load gautocloud config")
-	// }
-	// mergeObject(self, &lTmp)
+	// 2.
+	var lTmp AppConfig
+	lErr := gautocloud.Inject(&lTmp)
+	if lErr != nil {
+		log.WithError(lErr).Warn("unable to load gautocloud config")
+	}
+	mergeObject(self, &lTmp)
 
 	// 3.
 	flag.Parse()

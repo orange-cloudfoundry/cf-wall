@@ -29,6 +29,7 @@ func NewUaaCli(pConf *AppConfig) (*UaaCli, error) {
 		ClientName:   pConf.UaaClientName,
 		ClientSecret: pConf.UaaClientSecret,
 		UaaEndpoint:  pConf.UaaEndPoint,
+		SkipVerification: pConf.UaaSkipVerify,
 	}
 
 	lCli, lErr := uaaclient.NewClient(lager.NewLogger("cf-wall"), lConf, clock.NewClock())

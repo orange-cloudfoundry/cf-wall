@@ -6,7 +6,7 @@ import "errors"
 import "github.com/cloudfoundry-community/go-cfclient"
 import log "github.com/sirupsen/logrus"
 
-func NewCCCliFromRequest(pUrl string, pReq *http.Request) (*cfclient.Client, error) {
+func NewCCCliFromRequest(pUrl string, pReq *http.Request, pSkipVerify bool) (*cfclient.Client, error) {
 	lAuth, lOk := pReq.Header["Authorization"]
 	if (lOk == false) || (len(lAuth) == 0) {
 		lErr := errors.New("Authorization header is mandatory")
@@ -21,7 +21,7 @@ func NewCCCliFromRequest(pUrl string, pReq *http.Request) (*cfclient.Client, err
 		return nil, lErr
 	}
 
-	lCli, lErr := NewCCCli(pUrl, lParts[1])
+	lCli, lErr := NewCCCli(pUrl, lParts[1], pSkipVerify)
 	if lErr != nil {
 		log.WithError(lErr).Error("unable to create CC client")
 		return nil, lErr
@@ -30,7 +30,7 @@ func NewCCCliFromRequest(pUrl string, pReq *http.Request) (*cfclient.Client, err
 	return lCli, nil
 }
 
-func NewCCCli(pUrl string, pToken string) (*cfclient.Client, error) {
+func NewCCCli(pUrl string, pToken string, pSkipVerify bool) (*cfclient.Client, error) {
 	log.WithFields(log.Fields{
 		"endpoint": pUrl,
 	}).Debug("creating CC client")
@@ -38,6 +38,8 @@ func NewCCCli(pUrl string, pToken string) (*cfclient.Client, error) {
 	lConf := cfclient.Config{
 		ApiAddress: pUrl,
 		Token:      pToken,
+		SkipSslValidation: pSkipVerify,
 	}
+
 	return cfclient.NewClient(&lConf)
 }
