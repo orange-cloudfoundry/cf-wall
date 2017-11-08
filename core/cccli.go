@@ -16,6 +16,9 @@ type CFClient interface {
 	ListOrgs() ([]cfclient.Org, error)
 	ListSpacesByQuery(url.Values) ([]cfclient.Space, error)
 	ListAppsByQuery(query url.Values) ([]cfclient.App, error)
+	// ListServicesByQuery(query url.Values) ([]cfclient.Service, error)
+	ListServiceInstancesByQuery(query url.Values) ([]cfclient.ServiceInstance, error)
+	ListServiceBindingsByQuery(query url.Values) ([]cfclient.ServiceBinding, error)
 }
 
 func NewCCCliFromRequest(pUrl string, pReq *http.Request, pSkipVerify bool) (CFClient, error) {

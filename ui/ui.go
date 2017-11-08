@@ -28,7 +28,9 @@ func NewUiHandler(pConf *core.AppConfig, pRouter *mux.Router) *UiHandler {
 	pRouter.PathPrefix("/ui/static/").
 		Handler(http.StripPrefix("/ui/static/", http.FileServer(http.Dir("ui/static"))))
 	pRouter.HandleFunc("/ui", core.DecorateHandler(lObj.HandlerRequest))
-
+	pRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/ui", http.StatusMovedPermanently)
+	})
 	return &lObj
 }
 
