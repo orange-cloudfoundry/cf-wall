@@ -1,18 +1,42 @@
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
+- [Introduction](#introduction)
+- [UI](#ui)
 - [API](#api)
 - [Configuration](#configuration)
 
-<!-- markdown-toc end -->
+# Introduction
+
+**cf-wall** is an application that helps operations to communicate informations
+to cloud-foundry users.
+
+- Step 1: select targeted cloud-foundry components
+  - organizations
+  - spaces
+  - buildpacks
+  - services
+  - users
+
+- Step 2:
+  - Write mail subject
+  - Write mail body in markdown language
+
+- Step 3: cf-wall deduce recipients from selected targets and
+  send mail formatted in html from markdown
+
+# Ui
+
+![Ui Preview](./docs/ui.png "Ui preview")
+
 
 # API
 
-See [API Reference](./docs/api.md)
+cf-wall's api is documented [here](./docs/api.md)
 
 # Configuration
 
-See [Configuration](./docs/configuration.md)
+See [here](./docs/configuration.md)
+
 
 
 <!-- Local Variables: -->
