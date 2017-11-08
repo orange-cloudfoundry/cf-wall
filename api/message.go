@@ -22,6 +22,9 @@ type MessageReqCtx struct {
 	UserMails map[string]string
 	ReqData   MessageRequest
 	ResData   MessageResponse
+
+	apps      []cfclient.App
+	spaces    []string
 }
 
 type MessageHandler struct {
@@ -58,6 +61,11 @@ func NewMessageHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MessageHand
 
 	pRouter.Path("/v1/message").
 		HandlerFunc(core.DecorateHandler(lObj.HandleMessage)).
+		HeadersRegexp("Content-Type", "application/json.*").
+		Methods("POST")
+
+	pRouter.Path("/v1/message_all").
+		HandlerFunc(core.DecorateHandler(lObj.HandleMessageAll)).
 		HeadersRegexp("Content-Type", "application/json.*").
 		Methods("POST")
 
@@ -126,6 +134,33 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 	core.WriteJson(pRes, lCtx.ResData)
 }
 
+
+
+
+func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *http.Request) {
+	lUsers, lErr := self.getUaaUsers()
+	if lErr != nil {
+		panic(core.NewHttpError(lErr, 500, 51))
+	}
+
+	lCtx, lErr := self.createCtx(lUsers, pReq)
+	if lErr != nil {
+		panic(core.NewHttpError(lErr, 500, 50))
+	}
+	lCtx.addAllUsers()
+
+	if false == self.Config.MailDry {
+		log.Debug("sending mail")
+		// self.sendMessage(
+		// 	self.Config.MailFrom,
+		// 	lCtx.ResData.Emails,
+		// 	lCtx.ReqData.Subject,
+		// 	lCtx.ResData.Message)
+	}
+
+	core.WriteJson(pRes, lCtx.ResData)
+}
+
 func (self *MessageHandler) sendMessage(
 	pFrom    string,
 	pTo      []string,
@@ -162,17 +197,29 @@ func (self *MessageHandler) sendMessage(
 	}
 }
 
+
+
+
 func (self *MessageReqCtx) process() {
 	self.addOrgs(self.ReqData.Orgs)
-	self.addSpaces(self.ReqData.Spaces)
+
+	for _, cId := range self.ReqData.Spaces {
+		self.addSpace(cId)
+	}
+
 	self.addUsers(self.ReqData.Users)
 	self.addBuidPacks(self.ReqData.BuildPacks)
-	// TODO: addServices
+	self.addServices(self.ReqData.Services)
+
+	self.readSpaces()
 
 	lMk   := markdown.New(markdown.XHTMLOutput(true), markdown.Nofollow(true))
 	lHtml := lMk.RenderToString([]byte(self.ReqData.Message))
 	self.ResData.Message = lHtml
 }
+
+
+
 
 
 func (self *MessageReqCtx) addBuidPacks(pBps []string) {
@@ -188,18 +235,14 @@ func (self *MessageReqCtx) addBuidPacks(pBps []string) {
 	}
 
 	// 2. build targeted spaces from application buildpacks
-	lSpaces := make([]string, 0)
-	lApps   := self.getApps()
-	for _, cApp := range lApps {
-		if "" != cApp.DetectedBuildpackGuid {
-			_, lOk := lNeedles[cApp.DetectedBuildpackGuid]
+	self.mapApps(func (pApp *cfclient.App) {
+		if "" != pApp.DetectedBuildpackGuid {
+			_, lOk := lNeedles[pApp.DetectedBuildpackGuid]
 			if lOk {
-				lSpaces = append(lSpaces, cApp.SpaceGuid)
+				self.addSpace(pApp.SpaceGuid)
 			}
 		}
-	}
-
-	self.addSpaces(lSpaces)
+	});
 }
 
 func (self *MessageReqCtx) addOrgs(pOrgs []string) {
@@ -213,12 +256,11 @@ func (self *MessageReqCtx) addOrgs(pOrgs []string) {
 	}
 }
 
-func (self *MessageReqCtx) addSpaces(pSpaces []string) {
-	if 0 == len(pSpaces) {
+func (self *MessageReqCtx) readSpaces() {
+	if 0 == len(self.spaces) {
 		return
 	}
-
-	lUsers := self.getSpacesUsers(pSpaces)
+	lUsers := self.getSpacesUsers(self.spaces)
 	for _, cEl := range lUsers {
 		self.addUser(cEl.Guid)
 	}
@@ -240,8 +282,97 @@ func (self *MessageReqCtx) addUser(pGuid string) {
 	}
 }
 
-func (self *MessageReqCtx) addService(pGuid string) {
-	// todo
+
+func (self *MessageReqCtx) addAllUsers() {
+	for _, cMail := range self.UserMails {
+		self.ResData.Emails = append(self.ResData.Emails, cMail)
+	}
+}
+
+
+func (self *MessageReqCtx) addServices(pGuids []string) {
+	if 0 == len(pGuids) {
+		return
+	}
+
+	// 1. service list to guid map
+	lServices := map[string]bool{}
+	for _, cId := range pGuids {
+		lServices[cId] = true
+	}
+
+	// 2. search instances matching services
+	lUsedInst := make([]string, 0)
+	lInstances := self.getServiceInstances()
+	for _, cInst := range lInstances {
+		_, lOk := lServices[cInst.ServiceGuid]
+		if lOk {
+
+			self.addSpace(cInst.SpaceGuid)
+			lUsedInst = append(lUsedInst, cInst.Guid)
+		}
+	}
+
+	// 3. get bindings from instances
+	lBindings := self.getServiceBindings(lUsedInst)
+
+	// 4. browse bindings to get application spaces
+	for _, cBind := range lBindings {
+		self.mapApps(func (pApp *cfclient.App) {
+			if pApp.Guid == cBind.AppGuid {
+				self.addSpace(pApp.SpaceGuid)
+			}
+		})
+	}
+}
+
+func (self *MessageReqCtx) addSpace(pId string) {
+	self.spaces = append(self.spaces, pId)
+}
+
+func (self *MessageReqCtx) mapApps(pMap func (*cfclient.App)) {
+	if 0 == len(self.apps) {
+		self.apps = self.getApps()
+	}
+	for _, cApp := range self.apps {
+		pMap(&cApp)
+	}
+}
+
+func (self *MessageReqCtx) getServiceBindings(pList []string) ([]cfclient.ServiceBinding) {
+	log.Debug("reading service bindings")
+
+	lQuery := url.Values{}
+	lQuery.Set("results-per-page", "100")
+	lQuery.Add("q", fmt.Sprintf("service_instance_guid IN %s", strings.Join(pList, ",")))
+	lRes, lErr := self.CCCli.ListServiceBindingsByQuery(lQuery)
+	if lErr != nil {
+		lUerr := errors.New("unable to fetch service bindings from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(core.NewHttpError(lErr, 500, 50))
+	}
+	log.WithFields(log.Fields{"count": len(lRes)}).
+		Debug("fetched service bindings")
+
+	return lRes
+}
+
+
+func (self *MessageReqCtx) getServiceInstances() ([]cfclient.ServiceInstance) {
+	log.Debug("reading service instances")
+
+	lQuery := url.Values{}
+	lQuery.Set("results-per-page", "100")
+	lRes, lErr := self.CCCli.ListServiceInstancesByQuery(lQuery)
+	if lErr != nil {
+		lUerr := errors.New("unable to fetch service instances from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(core.NewHttpError(lErr, 500, 50))
+	}
+	log.WithFields(log.Fields{"count": len(lRes)}).
+		Debug("fetched service instances")
+
+	return lRes
 }
 
 

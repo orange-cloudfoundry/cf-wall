@@ -18,13 +18,13 @@
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-menu-hamburger"></span></a>
           <ul class="dropdown-menu">
             <li>
-              <a href="#">
+              <a href="https://github.com/orange-cloudfoundry/cf-wall/blob/master/README.md">
                 <span class="fa fa-file-text-o"></span>
                 User Documentation
               </a>
             </li>
             <li>
-              <a href="#">
+              <a href="https://github.com/orange-cloudfoundry/cf-wall/blob/master/docs/api.md">
               <span class="glyphicon glyphicon-cloud"></span>
               API Reference
             </a>

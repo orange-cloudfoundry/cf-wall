@@ -7,6 +7,7 @@
     <script src="/ui/static/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
     <script src="/ui/static/bower_components/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="/ui/static/bower_components/markdown-it/dist/markdown-it.min.js"></script>
+    <script src="/ui/static/bower_components/Bootstrap-Confirmation/bootstrap-confirmation.js"></script>
     <script src="/ui/static/cf-wall.js"></script>
     <link rel="stylesheet" href="/ui/static/bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/ui/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"/>
@@ -85,6 +86,10 @@
       <div class="row">
         <!-- Targets  -->
         <div class="col-md-3">
+          <div class="row text-center">
+            <input type="checkbox" id="send_all"/> Target everyone
+            <br/></br>
+          </div>
           <div class="row">
             <div class="panel-group" id="tgt" role="tablist" aria-multiselectable="true">
               {{ template "accordion.tpl" mkDict "Name" "orgs"     "Title" "Organizations" }}
@@ -134,6 +139,25 @@
         </div>
       </div>
 
+    </div>
+
+    <div id="msg_confirm" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-body text-center">
+            This will send an email to all users,<br/>
+            Are you sure ?
+          </div>
+          <div class="modal-footer">
+            <div class="text-center">
+              <div class="btn-group">
+                <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-success">Confirm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
 

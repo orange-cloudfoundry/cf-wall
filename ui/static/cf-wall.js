@@ -80,6 +80,12 @@ function Api(p_app) {
     });
   };
 
+  self.postMessageAll = function(p_data, p_callback) {
+    Pace.track(function() {
+      self.postJson("/v1/message_all", p_data, p_callback);
+    });
+  };
+
   self.getOrgs = function(p_callback) {
     Pace.ignore(function() {
       self.get("/v1/orgs", p_callback);
@@ -119,6 +125,8 @@ function Message(p_app) {
 
   self.ui = {
     send: $("#msg_send"),
+    confirm: $("#msg_confirm"),
+    confirm_ok: $("#msg_confirm button.btn-success"),
     msg:  {
       form:    $("#msg_form"),
       subject: $("#msg_subject"),
@@ -145,6 +153,16 @@ function Message(p_app) {
   };
 
   self.onSendClick = function() {
+    if (true == p_app.targets.targetAll()) {
+      self.ui.confirm.modal("show");
+    }
+    else {
+      self.onConfirmClick();
+    }
+  };
+
+  self.onConfirmClick = function() {
+    self.ui.confirm.modal("hide");
     self.ui.msg.form.submit();
   };
 
@@ -174,18 +192,30 @@ function Message(p_app) {
     if (false == p_app.targets.validate())
       return false;
 
-    var l_data = p_app.targets.getTargetData();
-    l_data["subject"] = self.ui.msg.subject.val();
-    l_data["message"] = self.ui.msg.content.val();
-
+    var l_data;
     self.disableSend();
-    p_app.api.postMessage(l_data, self.onMailSent);
+
+    if (p_app.targets.targetAll()) {
+      l_data = {};
+      l_data["subject"] = self.ui.msg.subject.val();
+      l_data["message"] = self.ui.msg.content.val();
+      p_app.api.postMessageAll(l_data, self.onMailSent);
+    } else {
+      l_data = p_app.targets.getTargetData();
+      l_data["subject"] = self.ui.msg.subject.val();
+      l_data["message"] = self.ui.msg.content.val();
+      p_app.api.postMessage(l_data, self.onMailSent);
+    }
     return false;
   };
 
   self.bind = function() {
     self.ui.send.click(self.onSendClick);
     self.ui.preview.tab.click(self.onPreviewClick);
+    self.ui.confirm.modal({
+      show: false
+    });
+    self.ui.confirm_ok.click(self.onConfirmClick);
   };
 
   self.init = function() {
@@ -208,6 +238,7 @@ function Targets(p_app) {
   var self = this;
 
   self.ui = {
+    all        : $("#send_all"),
     accordion  : $("#tgt"),
     orgs       : $("#tgt-orgs"),
     spaces     : $("#tgt-spaces"),
@@ -218,7 +249,16 @@ function Targets(p_app) {
   };
 
 
+  self.targetAll = function() {
+    return self.ui.all.is(":checked");
+  };
+
   self.validate = function() {
+    if (self.targetAll()) {
+      self.hideError();
+      return true;
+    }
+
     if ($("button[data-id]", self.ui.accordion).length) {
       self.hideError();
       return true;
