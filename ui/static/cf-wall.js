@@ -1,3 +1,4 @@
+
 jQuery.fn.outerHTML = function(s) {
   return (s)
     ? this.before(s).remove()
@@ -74,27 +75,39 @@ function Api(p_app) {
   };
 
   self.postMessage = function(p_data, p_callback) {
-    self.postJson("/v1/message", p_data, p_callback);
+    Pace.track(function() {
+      self.postJson("/v1/message", p_data, p_callback);
+    });
   };
 
   self.getOrgs = function(p_callback) {
-    return self.get("/v1/orgs", p_callback);
+    Pace.ignore(function() {
+      self.get("/v1/orgs", p_callback);
+    });
   };
 
   self.getSpaces = function(p_callback) {
-    return self.get("/v1/spaces", p_callback);
+    Pace.ignore(function() {
+      self.get("/v1/spaces", p_callback);
+    });
   };
 
   self.getUsers = function(p_callback) {
-    return self.get("/v1/users", p_callback);
+    Pace.ignore(function() {
+      self.get("/v1/users", p_callback);
+    });
   };
 
   self.getServices = function(p_callback) {
-    return self.get("/v1/services", p_callback);
+    Pace.ignore(function() {
+      self.get("/v1/services", p_callback);
+    });
   };
 
   self.getBuildpacks = function(p_callback) {
-    return self.get("/v1/buildpacks", p_callback);
+    Pace.ignore(function() {
+      self.get("/v1/buildpacks", p_callback);
+    });
   };
 };
 
@@ -139,7 +152,18 @@ function Message(p_app) {
     return self.send();
   };
 
+  self.disableSend = function() {
+    self.ui.send.addClass("disabled");
+    self.ui.send.attr("disabled", "disabled");
+  };
+
+  self.enableSend = function() {
+    self.ui.send.removeClass("disabled");
+    self.ui.send.removeAttr("disabled");
+  };
+
   self.onMailSent = function(p_data) {
+    self.enableSend();
     p_app.addMessage("Message successfully sent to :");
     $.each(p_data["emails"], function(c_idx, c_val) {
       p_app.addMessage(c_val);
@@ -153,6 +177,8 @@ function Message(p_app) {
     var l_data = p_app.targets.getTargetData();
     l_data["subject"] = self.ui.msg.subject.val();
     l_data["message"] = self.ui.msg.content.val();
+
+    self.disableSend();
     p_app.api.postMessage(l_data, self.onMailSent);
     return false;
   };

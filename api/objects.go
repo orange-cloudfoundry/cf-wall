@@ -115,7 +115,9 @@ func (self *ObjectHandler) getUsers(pRes http.ResponseWriter, pReq *http.Request
 	lApi := self.CCCreator(pReq)
 
 	log.Info("reading users from CC api")
-	lUsers, lErr := lApi.ListUsers()
+	lQuery := url.Values{}
+	lQuery.Set("results-per-page", "100")
+	lUsers, lErr := lApi.ListUsersByQuery(lQuery)
 	if lErr != nil {
 		lUerr := errors.New("unable to read users from CC api")
 		log.WithError(lErr).Error(lUerr.Error())

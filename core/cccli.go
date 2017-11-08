@@ -13,9 +13,9 @@ type CFClient interface {
 	ListUsersByQuery(url.Values) (cfclient.Users, error)
 	ListServices() ([]cfclient.Service, error)
 	ListBuildpacks() ([]cfclient.Buildpack, error)
-	ListUsers() (cfclient.Users, error)
 	ListOrgs() ([]cfclient.Org, error)
 	ListSpacesByQuery(url.Values) ([]cfclient.Space, error)
+	ListAppsByQuery(query url.Values) ([]cfclient.App, error)
 }
 
 func NewCCCliFromRequest(pUrl string, pReq *http.Request, pSkipVerify bool) (CFClient, error) {

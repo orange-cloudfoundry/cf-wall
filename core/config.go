@@ -24,6 +24,7 @@ type AppConfig struct {
 	HttpPort        int     `json:"http-port"         cloud:"http-port"`
 	LogLevel        string  `json:"log-level"         cloud:"log-level"`
 	MailFrom        string  `json:"mail-from"         cloud:"mail-from"`
+	MailDry         bool    `json:"mail-dry"          cloud:"mail-dry"`
 	ReloadTemplates bool    `json:"reload-templates"  cloud:"reload-templates"`
 }
 
@@ -53,6 +54,7 @@ func NewAppConfig() AppConfig {
 		HttpPort:        80,
 		LogLevel:        "error",
 		MailFrom:        "cf-wall@localhost",
+		MailDry:         false,
 		ReloadTemplates: false,
 	}
 
@@ -92,6 +94,7 @@ func (self *AppConfig) parseCmdLine() {
 	flag.IntVar    (&self.HttpPort,        "http-port",         self.HttpPort,        "Web server port")
 	flag.StringVar (&self.LogLevel,        "log-level",         self.LogLevel,        "Logger verbosity level")
 	flag.StringVar (&self.MailFrom,        "mail-from",         self.MailFrom,        "Mail From: address")
+	flag.BoolVar   (&self.MailDry,         "mail-dry",          self.MailDry,         "Disable actual mail sending (dev)")
 	flag.BoolVar   (&self.ReloadTemplates, "reload-templates",  self.ReloadTemplates, "Reload ui template on each request (dev)")
 	flag.Parse()
 }

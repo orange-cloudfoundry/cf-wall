@@ -114,18 +114,21 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 
 	lCtx.process()
 
-	self.sendMessage(
-		self.Config.MailFrom,
-		lCtx.ResData.Emails,
-		lCtx.ReqData.Subject,
-		lCtx.ResData.Message)
+	if false == self.Config.MailDry {
+		log.Debug("sending mail")
+		// self.sendMessage(
+		// 	self.Config.MailFrom,
+		// 	lCtx.ResData.Emails,
+		// 	lCtx.ReqData.Subject,
+		// 	lCtx.ResData.Message)
+	}
 
 	core.WriteJson(pRes, lCtx.ResData)
 }
 
 func (self *MessageHandler) sendMessage(
-	pFrom string,
-	pTo []string,
+	pFrom    string,
+	pTo      []string,
 	pSubject string,
 	pContent string) {
 
@@ -163,12 +166,40 @@ func (self *MessageReqCtx) process() {
 	self.addOrgs(self.ReqData.Orgs)
 	self.addSpaces(self.ReqData.Spaces)
 	self.addUsers(self.ReqData.Users)
+	self.addBuidPacks(self.ReqData.BuildPacks)
 	// TODO: addServices
-	// TODO: addBuidPack
 
 	lMk   := markdown.New(markdown.XHTMLOutput(true), markdown.Nofollow(true))
 	lHtml := lMk.RenderToString([]byte(self.ReqData.Message))
 	self.ResData.Message = lHtml
+}
+
+
+func (self *MessageReqCtx) addBuidPacks(pBps []string) {
+	if len(pBps) == 0 {
+		return
+	}
+
+	log.WithFields(log.Fields{ "buildpacks": pBps })
+	// 1. build map for more efficient search
+	lNeedles := map[string]bool{}
+	for _, cBp := range pBps {
+		lNeedles[cBp] = true
+	}
+
+	// 2. build targeted spaces from application buildpacks
+	lSpaces := make([]string, 0)
+	lApps   := self.getApps()
+	for _, cApp := range lApps {
+		if "" != cApp.DetectedBuildpackGuid {
+			_, lOk := lNeedles[cApp.DetectedBuildpackGuid]
+			if lOk {
+				lSpaces = append(lSpaces, cApp.SpaceGuid)
+			}
+		}
+	}
+
+	self.addSpaces(lSpaces)
 }
 
 func (self *MessageReqCtx) addOrgs(pOrgs []string) {
@@ -209,12 +240,26 @@ func (self *MessageReqCtx) addUser(pGuid string) {
 	}
 }
 
-func (self *MessageReqCtx) addBuidPack(pGuid string) {
+func (self *MessageReqCtx) addService(pGuid string) {
 	// todo
 }
 
-func (self *MessageReqCtx) addService(pGuid string) {
-	// todo
+
+func (self *MessageReqCtx) getApps() ([]cfclient.App) {
+	log.Debug("reading applications")
+
+	lQuery := url.Values{}
+	lQuery.Set("results-per-page", "100")
+	lApps, lErr := self.CCCli.ListAppsByQuery(lQuery)
+	if lErr != nil {
+		lUerr := errors.New("unable to fetch applications from CC api")
+		log.WithError(lErr).Error(lUerr.Error())
+		panic(core.NewHttpError(lErr, 500, 50))
+	}
+	log.WithFields(log.Fields{"count": len(lApps)}).
+		Debug("fetched applications")
+
+	return lApps
 }
 
 func (self *MessageReqCtx) getOrgsUsers(pList []string) cfclient.Users {
@@ -232,6 +277,8 @@ func (self *MessageReqCtx) getOrgsUsers(pList []string) cfclient.Users {
 		panic(core.NewHttpError(lErr, 500, 20))
 	}
 
+	log.WithFields(log.Fields{"count": len(lUsers)}).
+		Debug("fetched users")
 	return lUsers
 }
 
@@ -250,6 +297,8 @@ func (self *MessageReqCtx) getSpacesUsers(pList []string) cfclient.Users {
 		panic(core.NewHttpError(lErr, 500, 20))
 	}
 
+	log.WithFields(log.Fields{"count": len(lUsers)}).
+		Debug("fetched users")
 	return lUsers
 }
 

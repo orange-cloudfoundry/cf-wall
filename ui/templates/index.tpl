@@ -11,12 +11,23 @@
     <link rel="stylesheet" href="/ui/static/bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/ui/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"/>
     <link rel="stylesheet" href="/ui/static/bower_components/font-awesome/css/font-awesome.min.css" type="text/css" media="all" />
+    <link rel="stylesheet" href="/ui/static/bower_components/PACE/themes/blue/pace-theme-corner-indicator.css" type="text/css" media="all" />
     <link rel="stylesheet" href="/ui/static/style.css" type="text/css" media="all" />
     <script>
+     window.paceOptions = {
+       document: false, // disabled
+       eventLag: false, // disabled
+       restartOnPushState: false,
+       restartOnRequestAfter: false,
+       startOnPageLoad: false
+     }
+
      $(document).ready(function(){
        var g_app = new App();
      });
     </script>
+
+    <script src="/ui/static/bower_components/PACE/pace.min.js"></script>
 
     <style>
      .modal-content
