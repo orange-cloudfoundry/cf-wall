@@ -7,6 +7,7 @@ import "encoding/json"
 import "errors"
 import "net/http"
 import "net/url"
+import "sync"
 import "github.com/cloudfoundry-community/go-cfclient"
 import "github.com/gorilla/mux"
 import "github.com/golang-commonmark/markdown"
@@ -46,7 +47,6 @@ type MessageRequest struct {
 
 type MessageResponse struct {
 	Recipients  []string `json:"recipients"`
-	Copy        []string `json:"copy"`
 	Subject 		string   `json:"subject"`
 	Message 		string   `json:"message"`
 	From    		string   `json:"from"`
@@ -108,7 +108,7 @@ func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Reque
 
 	// add Cc from static config
 	for _, cCc := range self.Config.MailCc {
-		lCtx.ResData.Copy = append(lCtx.ResData.Copy, cCc)
+		lCtx.ResData.Recipients = append(lCtx.ResData.Recipients, cCc)
 	}
 
 	// add To additional recipients
@@ -148,10 +148,9 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 
 	lCtx.process()
 
-	self.sendMessage(
+	self.sendMessages(
 		lCtx.ResData.From,
 		lCtx.ResData.Recipients,
-		lCtx.ResData.Copy,
 		lCtx.ResData.Subject,
 		lCtx.ResData.Message)
 
@@ -173,33 +172,21 @@ func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *htt
 	}
 	lCtx.addAllUsers()
 
-	self.sendMessage(
+	self.sendMessages(
 		lCtx.ResData.From,
 		lCtx.ResData.Recipients,
-		lCtx.ResData.Copy,
 		lCtx.ResData.Subject,
 		lCtx.ResData.Message)
 
 	core.WriteJson(pRes, lCtx.ResData)
 }
 
-func (self *MessageHandler) sendMessage(
+func (self *MessageHandler) messageWorker(
+	pId      int,
 	pFrom    string,
-	pTo      []string,
-	pCpy     []string,
+	pToChan  <-chan string,
 	pSubject string,
-	pContent string) {
-
-	log.WithFields(log.Fields{
-		"To"      : pTo,
-		"Cc"      : pCpy,
-		"Subject" : pSubject,
-		"From"    : pFrom,
-	}).Debug("sending mail")
-
-	if self.Config.MailDry {
-		return
-	}
+	pContent string) (error) {
 
 	var lOpts smtptype.Smtp
 	lErr := gautocloud.Inject(&lOpts)
@@ -217,18 +204,64 @@ func (self *MessageHandler) sendMessage(
 		lOpts.User,
 		lOpts.Password)
 
-	lMsg := gomail.NewMessage()
-	lMsg.SetHeader("From", pFrom)
-	lMsg.SetHeader("To", pTo...)
-	lMsg.SetHeader("Cc", pCpy...)
-	lMsg.SetHeader("Subject", pSubject)
-	lMsg.SetBody("text/html", pContent)
-
-	lErr = lDialer.DialAndSend(lMsg)
+	lSender, lErr := lDialer.Dial()
 	if lErr != nil {
-		lUerr := errors.New("unable to send mail")
-		log.WithError(lErr).Error(lUerr.Error())
-		panic(core.NewHttpError(lUerr, 500, 53))
+		return lErr
+	}
+
+	for cDest := range pToChan {
+		lMsg := gomail.NewMessage()
+		lMsg.SetHeader("From", pFrom)
+		lMsg.SetHeader("To", cDest)
+		lMsg.SetHeader("Subject", pSubject)
+		lMsg.SetBody("text/html", pContent)
+
+		log.WithFields(log.Fields{
+			"worker": pId,
+			"to":     cDest,
+			"from":   pFrom,
+		}).Debug("preparing mail")
+
+		if false == self.Config.MailDry {
+			lErr = gomail.Send(lSender, lMsg)
+			if lErr != nil {
+				return lErr
+			}
+		}
+	}
+
+	return lSender.Close()
+}
+
+
+func (self *MessageHandler) sendMessages(pFrom string, pTo []string, pSub string, pBody string) {
+	lDest := make(chan string, len(pTo))
+	lRes  := make(chan error,  10)
+	var lGroup sync.WaitGroup
+
+	for cIdx := 0; cIdx < 10; cIdx++ {
+		lGroup.Add(1)
+		go func(pId int) {
+			lErr := self.messageWorker(pId, pFrom, lDest, pSub, pBody)
+			lRes <- lErr
+			lGroup.Done()
+		}(cIdx)
+	}
+
+	for _, cDest := range pTo {
+		lDest <- cDest
+	}
+	close(lDest)
+
+	lGroup.Wait()
+
+	for cIdx := 0; cIdx < 10; cIdx++ {
+		lErr := <-lRes
+		if lErr != nil {
+			lUErr := errors.New("unable to send mails")
+			log.WithError(lErr).Error(lUErr.Error())
+			panic(core.NewHttpError(lUErr, 500, 51))
+		}
 	}
 }
 
