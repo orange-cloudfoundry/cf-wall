@@ -1,3 +1,4 @@
+
 package api
 
 import "fmt"
@@ -38,14 +39,18 @@ type MessageRequest struct {
 	Orgs       []string `json:"orgs"`
 	Services   []string `json:"services"`
 	BuildPacks []string `json:"buildpacks"`
+	Recipients []string `json:"recipients"`
 	Subject    string   `json:"subject"`
 	Message    string   `json:"message"`
 }
 
 type MessageResponse struct {
 	Emails  []string `json:"emails"`
+	Subject string   `json:"subject"`
 	Message string   `json:"message"`
+	From    string   `json:"from"`
 }
+
 
 func NewMessageHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MessageHandler, error) {
 	lCli, lErr := core.NewUaaCli(pConf)
@@ -92,6 +97,24 @@ func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Reque
 		return nil, lErr
 	}
 
+	lCtx.ResData.From = self.Config.MailFrom
+
+	// compute subject
+	lCtx.ResData.Subject = lCtx.ReqData.Subject
+	if len(self.Config.MailTag) != 0 {
+		lCtx.ResData.Subject = fmt.Sprintf("%s %s", self.Config.MailTag, lCtx.ReqData.Subject)
+	}
+
+	// add recipients from static config
+	for _, cCc := range self.Config.MailCc {
+		lCtx.ResData.Emails = append(lCtx.ResData.Emails, cCc)
+	}
+
+	// add request additional recipients
+	for _, cDest := range lCtx.ReqData.Recipients {
+		lCtx.ResData.Emails = append(lCtx.ResData.Emails, cDest)
+	}
+
 	return &lCtx, nil
 }
 
@@ -99,6 +122,7 @@ func (self *MessageHandler) getUaaUsers() (map[string]string, error) {
 	lRes := make(map[string]string, 0)
 	log.Debug("reading UAA users")
 	lUsers, lErr := self.UaaCli.GetUserList()
+
 	if lErr != nil {
 		log.WithError(lErr).Error("unable to featch UAA users")
 		return lRes, lErr
@@ -115,6 +139,7 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 		panic(core.NewHttpError(lErr, 500, 51))
 	}
 
+
 	lCtx, lErr := self.createCtx(lUsers, pReq)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 500, 50))
@@ -122,14 +147,11 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 
 	lCtx.process()
 
-	if false == self.Config.MailDry {
-		log.Debug("sending mail")
-		// self.sendMessage(
-		// 	self.Config.MailFrom,
-		// 	lCtx.ResData.Emails,
-		// 	lCtx.ReqData.Subject,
-		// 	lCtx.ResData.Message)
-	}
+	self.sendMessage(
+		lCtx.ResData.From,
+		lCtx.ResData.Emails,
+		lCtx.ResData.Subject,
+		lCtx.ResData.Message)
 
 	core.WriteJson(pRes, lCtx.ResData)
 }
@@ -149,14 +171,11 @@ func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *htt
 	}
 	lCtx.addAllUsers()
 
-	if false == self.Config.MailDry {
-		log.Debug("sending mail")
-		// self.sendMessage(
-		// 	self.Config.MailFrom,
-		// 	lCtx.ResData.Emails,
-		// 	lCtx.ReqData.Subject,
-		// 	lCtx.ResData.Message)
-	}
+	self.sendMessage(
+		lCtx.ResData.From,
+		lCtx.ResData.Emails,
+		lCtx.ResData.Subject,
+		lCtx.ResData.Message)
 
 	core.WriteJson(pRes, lCtx.ResData)
 }
@@ -166,6 +185,10 @@ func (self *MessageHandler) sendMessage(
 	pTo      []string,
 	pSubject string,
 	pContent string) {
+
+	if self.Config.MailDry {
+		return
+	}
 
 	var lOpts smtptype.Smtp
 	lErr := gautocloud.Inject(&lOpts)
@@ -274,6 +297,8 @@ func (self *MessageReqCtx) addUsers(pUsers []string) {
 		self.addUser(cId)
 	}
 }
+
+
 
 func (self *MessageReqCtx) addUser(pGuid string) {
 	lMail, lOk := self.UserMails[pGuid]

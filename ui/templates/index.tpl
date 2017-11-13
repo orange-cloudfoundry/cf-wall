@@ -85,17 +85,23 @@
       <div class="row">
         <!-- Targets  -->
         <div class="col-md-3">
-          <div class="row text-center">
-            <input type="checkbox" id="send_all"/> Target everyone
-            <br/></br>
+          <div class="row" >
+            <div class="col-xs-4 col-xs-offset-2" style="text-align:center;">
+              <button id="tgt-send-all" class="btn btn-lg btn-default fa fa-users" data-tooltip="tooltip" data-placement="top" title="Send to everyone" data-toggle="button" aria-pressed="false" autocomplete="off"/>
+            </div>
+            <div class="col-xs-4" style="text-align:center;">
+              <button id="tgt-externals-add" class="btn btn-lg  btn-success fa fa-plus"  data-toggle="tooltip" data-placement="top" title="Add external target"/>
+            </div>
           </div>
+          <br/>
           <div class="row">
             <div class="panel-group" id="tgt" role="tablist" aria-multiselectable="true">
-              {{ template "accordion.tpl" mkDict "Name" "orgs"     "Title" "Organizations" }}
-              {{ template "accordion.tpl" mkDict "Name" "spaces"   "Title" "Spaces"        }}
-              {{ template "accordion.tpl" mkDict "Name" "services" "Title" "Services"      }}
-              {{ template "accordion.tpl" mkDict "Name" "buildpacks" "Title" "Build Packs" }}
-              {{ template "accordion.tpl" mkDict "Name" "users"      "Title" "Users"       }}
+              {{ template "accordion.tpl" mkDict "Name" "orgs"       "Title" "Organizations" }}
+              {{ template "accordion.tpl" mkDict "Name" "spaces"     "Title" "Spaces"        }}
+              {{ template "accordion.tpl" mkDict "Name" "services"   "Title" "Services"      }}
+              {{ template "accordion.tpl" mkDict "Name" "buildpacks" "Title" "Build Packs"   }}
+              {{ template "accordion.tpl" mkDict "Name" "users"      "Title" "Users"         }}
+              {{ template "accordion.tpl" mkDict "Name" "externals"  "Title" "Externals"     }}
             </div>
             <div class="form-group has-error has-danger text-center">
               <label id="tgt-error" class="text-danger" for="msg_subject">You must add at least one target.</label>
@@ -146,6 +152,31 @@
           <div class="modal-body text-center">
             This will send an email to all users,<br/>
             Are you sure ?
+          </div>
+          <div class="modal-footer">
+            <div class="text-center">
+              <div class="btn-group">
+                <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-success">Confirm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tgt-mail" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            <form class="form-horizontal">
+              <div class="form-group">
+                <label class="col-xs-2 control-label" for="email">Email</label>
+                <div class="col-xs-10">
+                  <input type="email" class="required email form-control" id="email" placeholder="name@domain.com">
+                </div>
+              </div>
+            </form>
           </div>
           <div class="modal-footer">
             <div class="text-center">

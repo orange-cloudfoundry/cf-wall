@@ -166,6 +166,13 @@ $ cf push
 
 # 4. Deploy application
 
+In the section, we suppose a running gobis route service that will act as
+a reverse proxy to authenticate cf-wall's users.
+
+You can install and configure gobis by following this
+[tutorial](./gobis.md).
+
+
 
 <!-- Local Variables: -->
 <!-- ispell-local-dictionary: "american" -->

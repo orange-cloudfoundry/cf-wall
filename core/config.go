@@ -10,22 +10,36 @@ import     "encoding/json"
 import log "github.com/sirupsen/logrus"
 import     "github.com/cloudfoundry-community/gautocloud"
 import     "github.com/cloudfoundry-community/gautocloud/connectors/generic"
+import     "strings"
+
+type MailCC []string
 
 type AppConfig struct {
 	ConfigFile      string
-	UaaClientName   string  `json:"uaa-client"        cloud:"uaa-client"`
-	UaaClientSecret string  `json:"uaa-secret"        cloud:"uaa-secret"`
-	UaaEndPoint     string  `json:"uaa-url"           cloud:"uaa-url"`
-	UaaSkipVerify   bool    `json:"uaa-skip-verify"   cloud:"uaa-skip-verify"`
-	CCEndPoint      string  `json:"cc-url"            cloud:"cc-url"`
-	CCSkipVerify    bool    `json:"cc-skip-verify"    cloud:"cc-skip-verify"`
-	HttpCert        string  `json:"http-cert"         cloud:"http-cert"`
-	HttpKey         string  `json:"http-key"          cloud:"http-key"`
-	HttpPort        int     `json:"http-port"         cloud:"http-port"`
-	LogLevel        string  `json:"log-level"         cloud:"log-level"`
-	MailFrom        string  `json:"mail-from"         cloud:"mail-from"`
-	MailDry         bool    `json:"mail-dry"          cloud:"mail-dry"`
-	ReloadTemplates bool    `json:"reload-templates"  cloud:"reload-templates"`
+	UaaClientName   string   `json:"uaa-client"        cloud:"uaa-client"`
+	UaaClientSecret string   `json:"uaa-secret"        cloud:"uaa-secret"`
+	UaaEndPoint     string   `json:"uaa-url"           cloud:"uaa-url"`
+	UaaSkipVerify   bool     `json:"uaa-skip-verify"   cloud:"uaa-skip-verify"`
+	CCEndPoint      string   `json:"cc-url"            cloud:"cc-url"`
+	CCSkipVerify    bool     `json:"cc-skip-verify"    cloud:"cc-skip-verify"`
+	HttpCert        string   `json:"http-cert"         cloud:"http-cert"`
+	HttpKey         string   `json:"http-key"          cloud:"http-key"`
+	HttpPort        int      `json:"http-port"         cloud:"http-port"`
+	LogLevel        string   `json:"log-level"         cloud:"log-level"`
+	MailFrom        string   `json:"mail-from"         cloud:"mail-from"`
+	MailDry         bool     `json:"mail-dry"          cloud:"mail-dry"`
+	MailCc          MailCC   `json:"mail-cc"           cloud:"mail-cc"`
+	MailTag         string   `json:"mail-tag"          cloud:"mail-tag"`
+	ReloadTemplates bool     `json:"reload-templates"  cloud:"reload-templates"`
+}
+
+func (self *MailCC) String() string {
+	return strings.Join(*self, ",")
+}
+
+func (self *MailCC) Set(pVal string) error {
+	*self = append(*self, pVal)
+	return nil
 }
 
 func InitLogger(pLevel string) {
@@ -55,6 +69,8 @@ func NewAppConfig() AppConfig {
 		LogLevel:        "error",
 		MailFrom:        "cf-wall@localhost",
 		MailDry:         false,
+		MailCc:          []string{},
+		MailTag:         "[cf-wall]",
 		ReloadTemplates: false,
 	}
 
@@ -95,7 +111,11 @@ func (self *AppConfig) parseCmdLine() {
 	flag.StringVar (&self.LogLevel,        "log-level",         self.LogLevel,        "Logger verbosity level")
 	flag.StringVar (&self.MailFrom,        "mail-from",         self.MailFrom,        "Mail From: address")
 	flag.BoolVar   (&self.MailDry,         "mail-dry",          self.MailDry,         "Disable actual mail sending (dev)")
+	flag.StringVar (&self.MailTag,         "mail-tag",          self.MailTag,         "Additional tag prefix for sent mails")
 	flag.BoolVar   (&self.ReloadTemplates, "reload-templates",  self.ReloadTemplates, "Reload ui template on each request (dev)")
+
+	flag.Var(&self.MailCc, "mail-cc", "List of additional recipients to all mails (can give multiple times)")
+
 	flag.Parse()
 }
 
