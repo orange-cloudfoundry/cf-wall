@@ -7,6 +7,9 @@
   "uaa-client"        : "cf-wall",
   "uaa-secret"        : "password",
   "uaa-url"           : "https://api.uaa.example.com",
-  "mail-from"         : "cf-run@example.com"
+  "mail-from"         : "cf-run@example.com",
+  "mail-dry"          : false,
+  "mail-cc"           : [],
+  "mail-tag"          : "[cf-wall]",
 }
 

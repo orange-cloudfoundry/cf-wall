@@ -41,6 +41,9 @@ function Api(p_app) {
 
   self.init = function(p_callback) {
     self.get("/auth/user_info", function(p_data) {
+      if (p_data == undefined) {
+        p_data = "";
+      }
       self.token = p_data["token"];
       p_callback();
     });
@@ -55,7 +58,7 @@ function Api(p_app) {
       done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
         self.apiError(p_endpoint, p_data);
-        p_callback([]);
+        p_callback(undefined);
       });
   };
 
@@ -71,6 +74,7 @@ function Api(p_app) {
       done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
         self.apiError(p_endpoint, p_data);
+        p_callback(undefined);
       });
   };
 
@@ -182,10 +186,15 @@ function Message(p_app) {
 
   self.onMailSent = function(p_data) {
     self.enableSend();
-    p_app.addMessage("Message successfully sent to :");
-    $.each(p_data["emails"], function(c_idx, c_val) {
-      p_app.addMessage(c_val);
-    });
+    if (p_data != undefined) {
+      p_app.addMessage("Message successfully.");
+      p_app.addMessage("from: "    + p_data["from"]);
+      p_app.addMessage("subject: " + p_data["subject"]);
+      p_app.addMessage("recipients: ");
+      $.each(p_data["emails"], function(c_idx, c_val) {
+        p_app.addMessage(c_val);
+      });
+    }
   };
 
   self.send = function() {
@@ -195,15 +204,20 @@ function Message(p_app) {
     var l_data;
     self.disableSend();
 
+    l_data               = p_app.targets.getTargetData();
+    l_data["subject"]    = self.ui.msg.subject.val();
+    l_data["message"]    = self.ui.msg.content.val();
+    l_data["recipients"] = l_data["externals"];
+    delete l_data["externals"];
+
     if (p_app.targets.targetAll()) {
-      l_data = {};
-      l_data["subject"] = self.ui.msg.subject.val();
-      l_data["message"] = self.ui.msg.content.val();
+      delete l_data["orgs"];
+      delete l_data["spaces"];
+      delete l_data["services"];
+      delete l_data["buildpacks"];
+      delete l_data["users"];
       p_app.api.postMessageAll(l_data, self.onMailSent);
     } else {
-      l_data = p_app.targets.getTargetData();
-      l_data["subject"] = self.ui.msg.subject.val();
-      l_data["message"] = self.ui.msg.content.val();
       p_app.api.postMessage(l_data, self.onMailSent);
     }
     return false;
@@ -238,19 +252,25 @@ function Targets(p_app) {
   var self = this;
 
   self.ui = {
-    all        : $("#send_all"),
-    accordion  : $("#tgt"),
-    orgs       : $("#tgt-orgs"),
-    spaces     : $("#tgt-spaces"),
-    services   : $("#tgt-services"),
-    buildpacks : $("#tgt-buildpacks"),
-    users      : $("#tgt-users"),
-    error      : $("#tgt-error")
+    all           : $("#tgt-send-all"),
+    accordion     : $("#tgt"),
+    orgs          : $("#tgt-orgs"),
+    spaces        : $("#tgt-spaces"),
+    services      : $("#tgt-services"),
+    buildpacks    : $("#tgt-buildpacks"),
+    users         : $("#tgt-users"),
+    externals     : $("#tgt-externals"),
+    externals_add : $("#tgt-externals-add"),
+    modal         : $("#tgt-mail"),
+    modal_add     : $("#tgt-mail button.btn-success"),
+    modal_mail    : $("#tgt-mail input"),
+    modal_form    : $("#tgt-mail form"),
+    error         : $("#tgt-error")
   };
 
 
   self.targetAll = function() {
-    return self.ui.all.is(":checked");
+    return self.ui.all.hasClass("active");
   };
 
   self.validate = function() {
@@ -267,6 +287,13 @@ function Targets(p_app) {
     return false;
   };
 
+  self.onAllClick = function(pEvent) {
+    self.ui.all.toggleClass("active");
+    self.validate();
+    pEvent.stopPropagation();
+    self.ui.all.blur();
+  };
+
   self.hideError = function() {
     self.ui.error.hide();
   };
@@ -281,7 +308,8 @@ function Targets(p_app) {
       "spaces"     : [],
       "services"   : [],
       "buildpacks" : [],
-      "users"      : []
+      "users"      : [],
+      "externals"  : []
     };
     $("button[data-id]", self.ui.accordion).each(function() {
       var l_type = $(this).data("type");
@@ -297,6 +325,7 @@ function Targets(p_app) {
     if (p_type == "services")   return self.ui.services;
     if (p_type == "buildpacks") return self.ui.buildpacks;
     if (p_type == "users")      return self.ui.users;
+    if (p_type == "externals")  return self.ui.externals;
     return undefined;
   };
 
@@ -346,8 +375,32 @@ function Targets(p_app) {
     });
   };
 
+
+  self.onExternalClick = function() {
+    self.ui.modal.modal("show");
+  };
+
+  self.onModalAddClick = function() {
+    if (true == self.ui.modal_form.valid()) {
+      self.addTarget("externals", self.ui.modal_mail.val(), self.ui.modal_mail.val());
+      self.ui.modal.modal("hide");
+      self.ui.modal_mail.val("");
+    };
+  };
+
+  self.bind = function() {
+    self.ui.modal.modal({"show" : false});
+    self.ui.modal_add.click(self.onModalAddClick);
+    self.ui.externals_add.click(self.onExternalClick);
+    self.ui.all.click(self.onAllClick);
+  };
+
   self.init = function() {
     self.hideError();
+    self.bind();
+    self.ui.modal_form.validate({
+      errorClass: "text-danger"
+    });
   };
 
   self.init();
@@ -430,6 +483,7 @@ function OrgTable(p_app) {
 
   self.bind = function() {
     $('[data-toggle="tooltip"]').tooltip();
+    $('[data-tooltip="tooltip"]').tooltip();
     $("button.org_filter", self.ui.table).click(self.onSpaceBtnClick);
     $("button.add_item",   self.ui.table).click(function() {
       p_app.targets.addTarget("orgs", $(this).data("id"), $(this).data("name"));
@@ -457,6 +511,10 @@ function SpaceTable(p_app) {
   };
 
   self.initTable = function(p_data) {
+    if (p_data == undefined) {
+      p_data = []
+    }
+
     var l_cols = [
         {
           "data"      : "name",
