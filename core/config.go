@@ -4,8 +4,6 @@ import     "flag"
 import     "os"
 import     "fmt"
 import     "strconv"
-import     "reflect"
-import     "errors"
 import     "encoding/json"
 import log "github.com/sirupsen/logrus"
 import     "github.com/cloudfoundry-community/gautocloud"
@@ -55,24 +53,7 @@ func InitLogger(pLevel string) {
 }
 
 func NewAppConfig() AppConfig {
-	lConf := AppConfig{
-		ConfigFile:      "",
-		UaaClientName:   "cf-wall",
-		UaaClientSecret: "password",
-		UaaSkipVerify:   false,
-		UaaEndPoint:     "https://uaa.example.com",
-		CCEndPoint:      "https://api.example.com",
-		CCSkipVerify:    false,
-		HttpCert:        "",
-		HttpKey:         "",
-		HttpPort:        80,
-		LogLevel:        "error",
-		MailFrom:        "cf-wall@localhost",
-		MailDry:         false,
-		MailCc:          []string{},
-		MailTag:         "[cf-wall]",
-		ReloadTemplates: false,
-	}
+	lConf := AppConfig{}
 
 	InitLogger("debug")
 	lConf.parseArgs()
@@ -127,12 +108,11 @@ func (self *AppConfig) parseArgs() {
 	}
 
 	// 2.
-	var lTmp AppConfig
-	lErr := gautocloud.Inject(&lTmp)
+	lErr := gautocloud.Inject(self)
 	if lErr != nil {
 		log.WithError(lErr).Warn("unable to load gautocloud config")
 	}
-	mergeObject(self, &lTmp)
+	log.WithField("conf", self).Debug("final conf")
 
 	// 3.
 	flag.Parse()
@@ -148,41 +128,8 @@ func (self *AppConfig) parseArgs() {
 	}
 }
 
-func mergeObject(pRef interface{}, pData interface{}) (error) {
-	lType    := reflect.TypeOf(pRef)
-	if lType != reflect.TypeOf(pData) {
-		return errors.New("type mismatch")
-	}
-
-	lRefVal  := reflect.ValueOf(pRef)
-	lDataVal := reflect.ValueOf(pData)
-
-	if lType.Kind() == reflect.Ptr {
-		lRefVal  = lRefVal.Elem()
-		lDataVal = lDataVal.Elem()
-	}
-
-	for cIdx := 0; cIdx < lRefVal.NumField(); cIdx++ {
-		lRefField  := lRefVal.Field(cIdx)
-		lDataField := lDataVal.Field(cIdx)
-		lFieldType := lDataField.Type()
-
-		if lFieldType.Comparable() {
-			lZeroValue := reflect.Zero(lFieldType).Interface()
-			lDataValue := lDataField.Interface()
-			if lDataValue != lZeroValue {
-				lRefField.Set(lDataField)
-			}
-		} else {
-			lRefField.Set(lDataField)
-		}
-	}
-	return nil
-}
-
 func init() {
 	gautocloud.RegisterConnector(generic.NewConfigGenericConnector(AppConfig{}))
-
 }
 
 // Local Variables:

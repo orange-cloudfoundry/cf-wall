@@ -10,6 +10,7 @@
     - [/buildpacks](#buildpacks)
     - [/users](#users)
     - [/message](#message)
+    - [/message_all](#message_all)
 
 <!-- markdown-toc end -->
 
@@ -217,6 +218,37 @@ Send mail to given targets
 
     // list of targeted users guids
     "users"      : [ "0a01ace3-4a0f-458a-a78d-4a6ef6deeac8", "61ecb1cb-47fa-4286-8d1b-8c279df65de7" ],
+
+    // list of additional recipients
+    "recipients" : [ "user@domain.com" ],
+
+    // mail subject
+    "subject" : "My Pretty Subject",
+
+    // mail body (markdown syntax)
+    "message" : "# Title 1\n - list1\n"
+  }
+  ```
+
+* Response 204 (No content)
+
+
+
+
+
+## /message_all
+
+Send mail to all UAA users
+
+* Method: POST
+
+* Headers: Authorization (bearer)
+
+* Request payload (all fields are mandatory):
+  ```
+  {
+    // list of additional recipients
+    "recipients" : [ "user@domain.com" ],
 
     // mail subject
     "subject" : "My Pretty Subject",
