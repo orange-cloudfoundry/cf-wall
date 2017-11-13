@@ -8,11 +8,12 @@
     <script src="/ui/static/bower_components/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="/ui/static/bower_components/markdown-it/dist/markdown-it.min.js"></script>
     <script src="/ui/static/cf-wall.js"></script>
-    <link rel="stylesheet" href="/ui/static/bower_components/bootstrap/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="/ui/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"/>
-    <link rel="stylesheet" href="/ui/static/bower_components/font-awesome/css/font-awesome.min.css" type="text/css" media="all" />
-    <link rel="stylesheet" href="/ui/static/bower_components/PACE/themes/blue/pace-theme-corner-indicator.css" type="text/css" media="all" />
-    <link rel="stylesheet" href="/ui/static/style.css" type="text/css" media="all" />
+    <link rel="shortcut icon" href="/ui/static/favicon.ico" />
+    <link rel="stylesheet"    href="/ui/static/bower_components/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet"    href="/ui/static/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"/>
+    <link rel="stylesheet"    href="/ui/static/bower_components/font-awesome/css/font-awesome.min.css" type="text/css" media="all" />
+    <link rel="stylesheet"    href="/ui/static/bower_components/PACE/themes/blue/pace-theme-corner-indicator.css" type="text/css" media="all" />
+    <link rel="stylesheet"    href="/ui/static/style.css" type="text/css" media="all" />
     <script>
      window.paceOptions = {
        document: false, // disabled
