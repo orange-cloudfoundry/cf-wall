@@ -190,8 +190,12 @@ function Message(p_app) {
       p_app.addMessage("Message successfully.");
       p_app.addMessage("from: "    + p_data["from"]);
       p_app.addMessage("subject: " + p_data["subject"]);
+      p_app.addMessage("copy: ");
+      $.each(p_data["copy"], function(c_idx, c_val) {
+        p_app.addMessage(c_val);
+      });
       p_app.addMessage("recipients: ");
-      $.each(p_data["emails"], function(c_idx, c_val) {
+      $.each(p_data["recipients"], function(c_idx, c_val) {
         p_app.addMessage(c_val);
       });
     }

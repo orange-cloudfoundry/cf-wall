@@ -45,10 +45,11 @@ type MessageRequest struct {
 }
 
 type MessageResponse struct {
-	Emails  []string `json:"emails"`
-	Subject string   `json:"subject"`
-	Message string   `json:"message"`
-	From    string   `json:"from"`
+	Recipients  []string `json:"recipients"`
+	Copy        []string `json:"copy"`
+	Subject 		string   `json:"subject"`
+	Message 		string   `json:"message"`
+	From    		string   `json:"from"`
 }
 
 
@@ -105,14 +106,14 @@ func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Reque
 		lCtx.ResData.Subject = fmt.Sprintf("%s %s", self.Config.MailTag, lCtx.ReqData.Subject)
 	}
 
-	// add recipients from static config
+	// add Cc from static config
 	for _, cCc := range self.Config.MailCc {
-		lCtx.ResData.Emails = append(lCtx.ResData.Emails, cCc)
+		lCtx.ResData.Copy = append(lCtx.ResData.Copy, cCc)
 	}
 
-	// add request additional recipients
+	// add To additional recipients
 	for _, cDest := range lCtx.ReqData.Recipients {
-		lCtx.ResData.Emails = append(lCtx.ResData.Emails, cDest)
+		lCtx.ResData.Recipients = append(lCtx.ResData.Recipients, cDest)
 	}
 
 	return &lCtx, nil
@@ -149,7 +150,8 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 
 	self.sendMessage(
 		lCtx.ResData.From,
-		lCtx.ResData.Emails,
+		lCtx.ResData.Recipients,
+		lCtx.ResData.Copy,
 		lCtx.ResData.Subject,
 		lCtx.ResData.Message)
 
@@ -173,7 +175,8 @@ func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *htt
 
 	self.sendMessage(
 		lCtx.ResData.From,
-		lCtx.ResData.Emails,
+		lCtx.ResData.Recipients,
+		lCtx.ResData.Copy,
 		lCtx.ResData.Subject,
 		lCtx.ResData.Message)
 
@@ -183,8 +186,16 @@ func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *htt
 func (self *MessageHandler) sendMessage(
 	pFrom    string,
 	pTo      []string,
+	pCpy     []string,
 	pSubject string,
 	pContent string) {
+
+	log.WithFields(log.Fields{
+		"To"      : pTo,
+		"Cc"      : pCpy,
+		"Subject" : pSubject,
+		"From"    : pFrom,
+	}).Debug("sending mail")
 
 	if self.Config.MailDry {
 		return
@@ -209,6 +220,7 @@ func (self *MessageHandler) sendMessage(
 	lMsg := gomail.NewMessage()
 	lMsg.SetHeader("From", pFrom)
 	lMsg.SetHeader("To", pTo...)
+	lMsg.SetHeader("Cc", pCpy...)
 	lMsg.SetHeader("Subject", pSubject)
 	lMsg.SetBody("text/html", pContent)
 
@@ -303,14 +315,14 @@ func (self *MessageReqCtx) addUsers(pUsers []string) {
 func (self *MessageReqCtx) addUser(pGuid string) {
 	lMail, lOk := self.UserMails[pGuid]
 	if lOk {
-		self.ResData.Emails = append(self.ResData.Emails, lMail)
+		self.ResData.Recipients = append(self.ResData.Recipients, lMail)
 	}
 }
 
 
 func (self *MessageReqCtx) addAllUsers() {
 	for _, cMail := range self.UserMails {
-		self.ResData.Emails = append(self.ResData.Emails, cMail)
+		self.ResData.Recipients = append(self.ResData.Recipients, cMail)
 	}
 }
 

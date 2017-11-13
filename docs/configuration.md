@@ -87,6 +87,16 @@ $ cp ./config/cf-wall.json.sample ./config/cf-wall.json
 Then adapt values for your environment.
 ```
 {
+  // UAA client name and secret
+  "uaa-client"        : "cf-wall",
+  "uaa-secret"        : "cf-wall",
+
+  // url to UAA api endpoint, same used in uaac
+  "uaa-url"           : "https://uaa.local.pcfdev.io",
+
+  // don't check ssl certificates when working with pcfdev
+  "uaa-skip-verify"    : true,
+
   // url to cloud-foundry api endpoint
   "cc-url"            : "https://api.local.pcfdev.io",
 
@@ -103,18 +113,20 @@ Then adapt values for your environment.
   // Logger serverity level
   "log-level"         : "debug",
 
-  // UAA client name and secret
-  "uaa-client"        : "cf-wall",
-  "uaa-secret"        : "cf-wall",
+  // email origin for all mails sent by cf-wall
+  "mail-from"         : "root@localhost",
 
-  // url to UAA api endpoint, same used in uaac
-  "uaa-url"           : "https://uaa.local.pcfdev.io",
+  // when true, don't actually send mails, test only
+  "mail-dry": false,
 
-  // don't check ssl certificates when working with pcfdev
-  "uaa-skip-verify"    : true,
+  // static list of carbon copy recipients
+  "mail-cc" : "root@localhost",
 
-// email origin for all mails sent by cf-wall
-  "mail-from"         : "root@localhost"
+  // tag to automatically prepend to mail subjects
+  "mail-tag": "[cf-wall]",
+
+  // prase html template at each requests (test only)
+  "reload-templates" : false
 }
 ```
 
