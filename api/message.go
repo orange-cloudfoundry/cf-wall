@@ -7,6 +7,7 @@ import "encoding/json"
 import "errors"
 import "net/http"
 import "net/url"
+import "net/mail"
 import "sync"
 import "github.com/cloudfoundry-community/go-cfclient"
 import "github.com/gorilla/mux"
@@ -17,6 +18,7 @@ import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/raw"
 import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/smtptype"
 import "gopkg.in/gomail.v2"
 import "github.com/orange-cloudfoundry/cf-wall/core"
+
 
 
 type MessageReqCtx struct {
@@ -98,24 +100,11 @@ func (self *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Reque
 		return nil, lErr
 	}
 
-	lCtx.ResData.From = self.Config.MailFrom
-
-	// compute subject
-	lCtx.ResData.Subject = lCtx.ReqData.Subject
-	if len(self.Config.MailTag) != 0 {
-		lCtx.ResData.Subject = fmt.Sprintf("%s %s", self.Config.MailTag, lCtx.ReqData.Subject)
-	}
-
-	// add Cc from static config
-	for _, cCc := range self.Config.MailCc {
-		lCtx.ResData.Recipients = append(lCtx.ResData.Recipients, cCc)
-	}
-
-	// add To additional recipients
-	for _, cDest := range lCtx.ReqData.Recipients {
-		lCtx.ResData.Recipients = append(lCtx.ResData.Recipients, cDest)
-	}
-
+	lCtx.setFrom(self.Config.MailFrom)
+	lCtx.setSubject(lCtx.ReqData.Subject, self.Config.MailTag)
+	lCtx.addRecipents(self.Config.MailCc)
+	lCtx.addRecipents(lCtx.ReqData.Recipients)
+	lCtx.setBody(lCtx.ReqData.Message)
 	return &lCtx, nil
 }
 
@@ -129,7 +118,11 @@ func (self *MessageHandler) getUaaUsers() (map[string]string, error) {
 		return lRes, lErr
 	}
 	for _, cEl := range lUsers {
-		lRes[cEl.Id] = cEl.Email
+		lMail := cEl.Email
+		_, lErr := mail.ParseAddress(lMail)
+		if lErr == nil {
+			lRes[cEl.Id] = cEl.Email
+		}
 	}
 	return lRes, nil
 }
@@ -140,13 +133,17 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 		panic(core.NewHttpError(lErr, 500, 51))
 	}
 
-
 	lCtx, lErr := self.createCtx(lUsers, pReq)
 	if lErr != nil {
 		panic(core.NewHttpError(lErr, 500, 50))
 	}
 
-	lCtx.process()
+	lCtx.addOrgs(lCtx.ReqData.Orgs)
+	lCtx.addSpaces(lCtx.ReqData.Spaces)
+	lCtx.addBuidPacks(lCtx.ReqData.BuildPacks)
+	lCtx.addServices(lCtx.ReqData.Services)
+	lCtx.addUsers(lCtx.ReqData.Users)
+	lCtx.readSpaces()
 
 	self.sendMessages(
 		lCtx.ResData.From,
@@ -208,6 +205,7 @@ func (self *MessageHandler) messageWorker(
 	if lErr != nil {
 		return lErr
 	}
+	defer lSender.Close()
 
 	for cDest := range pToChan {
 		lMsg := gomail.NewMessage()
@@ -217,14 +215,14 @@ func (self *MessageHandler) messageWorker(
 		lMsg.SetBody("text/html", pContent)
 
 		log.WithFields(log.Fields{
-			"worker": pId,
-			"to":     cDest,
-			"from":   pFrom,
-		}).Debug("preparing mail")
+			"worker":  pId,
+			"to":      cDest,
+		}).Debug("sending mail")
 
 		if false == self.Config.MailDry {
 			lErr = gomail.Send(lSender, lMsg)
 			if lErr != nil {
+				lSender.Close()
 				return lErr
 			}
 		}
@@ -238,6 +236,11 @@ func (self *MessageHandler) sendMessages(pFrom string, pTo []string, pSub string
 	lDest := make(chan string, len(pTo))
 	lRes  := make(chan error,  10)
 	var lGroup sync.WaitGroup
+
+	log.WithFields(log.Fields{
+		"from":    pFrom,
+		"subject": pSub,
+	}).Debug("preparing mail")
 
 	for cIdx := 0; cIdx < 10; cIdx++ {
 		lGroup.Add(1)
@@ -266,28 +269,41 @@ func (self *MessageHandler) sendMessages(pFrom string, pTo []string, pSub string
 }
 
 
+func (self *MessageReqCtx) setFrom(pFrom string) {
+	self.ResData.From = pFrom
+}
 
-
-func (self *MessageReqCtx) process() {
-	self.addOrgs(self.ReqData.Orgs)
-
-	for _, cId := range self.ReqData.Spaces {
-		self.addSpace(cId)
+func (self *MessageReqCtx) setSubject(pSub string, pTag string) {
+	self.ResData.Subject = pSub
+	if len(pTag) != 0 {
+		self.ResData.Subject = fmt.Sprintf("%s %s", pTag, pSub)
 	}
+}
 
-	self.addUsers(self.ReqData.Users)
-	self.addBuidPacks(self.ReqData.BuildPacks)
-	self.addServices(self.ReqData.Services)
+func (self *MessageReqCtx) addRecipents(pList []string) {
+	for _, cItem := range pList {
+		_, lErr := mail.ParseAddress(cItem)
+		if lErr != nil {
+			lUErr := errors.New(fmt.Sprintf("invalid email address '%s'", cItem))
+			log.WithError(lErr).Error(lUErr.Error())
+			panic(core.NewHttpError(lUErr, 500, 51))
+		}
+		self.ResData.Recipients = append(self.ResData.Recipients, cItem)
+	}
+}
 
-	self.readSpaces()
-
+func (self *MessageReqCtx) setBody(pMarkdown string) {
 	lMk   := markdown.New(markdown.XHTMLOutput(true), markdown.Nofollow(true))
-	lHtml := lMk.RenderToString([]byte(self.ReqData.Message))
+	lHtml := lMk.RenderToString([]byte(pMarkdown))
 	self.ResData.Message = lHtml
 }
 
 
-
+func (self *MessageReqCtx) addSpaces(pSpaces []string) {
+	for _, cId := range pSpaces {
+		self.addSpace(cId)
+	}
+}
 
 
 func (self *MessageReqCtx) addBuidPacks(pBps []string) {
