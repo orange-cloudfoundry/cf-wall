@@ -8,14 +8,10 @@ import "errors"
 import "net/http"
 import "net/url"
 import "net/mail"
-import "sync"
 import "github.com/cloudfoundry-community/go-cfclient"
 import "github.com/gorilla/mux"
 import "github.com/golang-commonmark/markdown"
 import log "github.com/sirupsen/logrus"
-import "github.com/cloudfoundry-community/gautocloud"
-import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/raw"
-import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/smtptype"
 import "gopkg.in/gomail.v2"
 import "github.com/orange-cloudfoundry/cf-wall/core"
 
@@ -34,6 +30,7 @@ type MessageReqCtx struct {
 type MessageHandler struct {
 	UaaCli *core.UaaCli
 	Config *core.AppConfig
+	queue  chan *gomail.Message
 }
 
 type MessageRequest struct {
@@ -55,7 +52,11 @@ type MessageResponse struct {
 }
 
 
-func NewMessageHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MessageHandler, error) {
+func NewMessageHandler(
+	pConf   *core.AppConfig,
+	pRouter *mux.Router,
+	pQueue  chan *gomail.Message) (*MessageHandler, error) {
+
 	lCli, lErr := core.NewUaaCli(pConf)
 	if lErr != nil {
 		log.WithError(lErr).Error("failed to create core UaaClient", lErr)
@@ -65,6 +66,7 @@ func NewMessageHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MessageHand
 	lObj := MessageHandler{
 		UaaCli: lCli,
 		Config: pConf,
+		queue:  pQueue,
 	}
 
 	pRouter.Path("/v1/message").
@@ -151,11 +153,9 @@ func (self *MessageHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.R
 		lCtx.ResData.Subject,
 		lCtx.ResData.Message)
 
-	core.WriteJson(pRes, lCtx.ResData)
+	pRes.WriteHeader(204)
+	//core.WriteJson(pRes, lCtx.ResData)
 }
-
-
-
 
 func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *http.Request) {
 	lUsers, lErr := self.getUaaUsers()
@@ -175,99 +175,25 @@ func (self *MessageHandler) HandleMessageAll(pRes http.ResponseWriter, pReq *htt
 		lCtx.ResData.Subject,
 		lCtx.ResData.Message)
 
-	core.WriteJson(pRes, lCtx.ResData)
+	pRes.WriteHeader(204)
+	//core.WriteJson(pRes, lCtx.ResData)
 }
 
-func (self *MessageHandler) messageWorker(
-	pId      int,
-	pFrom    string,
-	pToChan  <-chan string,
-	pSubject string,
-	pContent string) (error) {
+func (self *MessageHandler) sendMessages(
+	pFrom string,
+	pTo   []string,
+	pSub  string,
+	pBody string) {
 
-	var lOpts smtptype.Smtp
-	lErr := gautocloud.Inject(&lOpts)
-	if lErr != nil {
-		lUerr := errors.New("unable to get smtp settings")
-		log.WithError(lErr).Error(lUerr.Error())
-		panic(core.NewHttpError(lUerr, 500, 52))
-	}
-	log.WithFields(log.Fields{"smtp": lOpts}).
-		Debug("fetched settings from gautocloud")
-
-	lDialer := gomail.NewPlainDialer(
-		lOpts.Host,
-		lOpts.Port,
-		lOpts.User,
-		lOpts.Password)
-
-	lSender, lErr := lDialer.Dial()
-	if lErr != nil {
-		return lErr
-	}
-	defer lSender.Close()
-
-	for cDest := range pToChan {
+	for _, cDest := range pTo {
 		lMsg := gomail.NewMessage()
 		lMsg.SetHeader("From", pFrom)
 		lMsg.SetHeader("To", cDest)
-		lMsg.SetHeader("Subject", pSubject)
-		lMsg.SetBody("text/html", pContent)
-
-		log.WithFields(log.Fields{
-			"worker":  pId,
-			"to":      cDest,
-		}).Debug("sending mail")
-
-		if false == self.Config.MailDry {
-			lErr = gomail.Send(lSender, lMsg)
-			if lErr != nil {
-				lSender.Close()
-				return lErr
-			}
-		}
-	}
-
-	return lSender.Close()
-}
-
-
-func (self *MessageHandler) sendMessages(pFrom string, pTo []string, pSub string, pBody string) {
-	lDest := make(chan string, len(pTo))
-	lRes  := make(chan error,  10)
-	var lGroup sync.WaitGroup
-
-	log.WithFields(log.Fields{
-		"from":    pFrom,
-		"subject": pSub,
-	}).Debug("preparing mail")
-
-	for cIdx := 0; cIdx < 10; cIdx++ {
-		lGroup.Add(1)
-		go func(pId int) {
-			lErr := self.messageWorker(pId, pFrom, lDest, pSub, pBody)
-			lRes <- lErr
-			lGroup.Done()
-		}(cIdx)
-	}
-
-	for _, cDest := range pTo {
-		lDest <- cDest
-	}
-	close(lDest)
-
-	lGroup.Wait()
-
-	for cIdx := 0; cIdx < 10; cIdx++ {
-		lErr := <-lRes
-		if lErr != nil {
-			lUErr := errors.New("unable to send mails")
-			log.WithError(lErr).Error(lUErr.Error())
-			panic(core.NewHttpError(lUErr, 500, 51))
-		}
+		lMsg.SetHeader("Subject", pSub)
+		lMsg.SetBody("text/html", pBody)
+		self.queue <- lMsg
 	}
 }
-
 
 func (self *MessageReqCtx) setFrom(pFrom string) {
 	self.ResData.From = pFrom
@@ -298,13 +224,11 @@ func (self *MessageReqCtx) setBody(pMarkdown string) {
 	self.ResData.Message = lHtml
 }
 
-
 func (self *MessageReqCtx) addSpaces(pSpaces []string) {
 	for _, cId := range pSpaces {
 		self.addSpace(cId)
 	}
 }
-
 
 func (self *MessageReqCtx) addBuidPacks(pBps []string) {
 	if len(pBps) == 0 {
@@ -358,8 +282,6 @@ func (self *MessageReqCtx) addUsers(pUsers []string) {
 		self.addUser(cId)
 	}
 }
-
-
 
 func (self *MessageReqCtx) addUser(pGuid string) {
 	lMail, lOk := self.UserMails[pGuid]
@@ -517,11 +439,6 @@ func (self *MessageReqCtx) getSpacesUsers(pList []string) cfclient.Users {
 	log.WithFields(log.Fields{"count": len(lUsers)}).
 		Debug("fetched users")
 	return lUsers
-}
-
-
-func init() {
-	gautocloud.RegisterConnector(raw.NewSmtpRawConnector())
 }
 
 // Local Variables:
