@@ -8,7 +8,7 @@ import log "github.com/sirupsen/logrus"
 import "github.com/orange-cloudfoundry/cf-wall/core"
 import "github.com/orange-cloudfoundry/cf-wall/api"
 import "github.com/orange-cloudfoundry/cf-wall/ui"
-
+import "github.com/orange-cloudfoundry/cf-wall/mail"
 
 var GApp App
 
@@ -17,13 +17,16 @@ type App struct {
 	UiHandler      *ui.UiHandler
 	ObjectHandler  *api.ObjectHandler
 	MessageHandler *api.MessageHandler
+	MailHandler    *mail.MailHandler
 }
 
 func NewApp(pRouter *mux.Router) *App {
-	lConf := core.NewAppConfig()
-	lObjH := api.NewObjectHandler(&lConf, pRouter)
-	lUiH  := ui.NewUiHandler(&lConf, pRouter)
-	lMsgH, lErr := api.NewMessageHandler(&lConf, pRouter)
+	lConf 				:= core.NewAppConfig()
+	lObjH 				:= api.NewObjectHandler(&lConf, pRouter)
+	lUiH          := ui.NewUiHandler(&lConf, pRouter)
+	lMailer, lErr := mail.NewMailHandler(&lConf, pRouter)
+	lMsgH,   lErr := api.NewMessageHandler(&lConf, pRouter, lMailer.Queue)
+
 	if lErr != nil {
 		log.WithError(lErr).Error("failed to create api MessageHandler", lErr)
 		os.Exit(1)
@@ -34,6 +37,7 @@ func NewApp(pRouter *mux.Router) *App {
 		ObjectHandler:  lObjH,
 		UiHandler:      lUiH,
 		MessageHandler: lMsgH,
+		MailHandler:    lMailer,
 	}
 }
 
@@ -68,6 +72,8 @@ func (self *App) ListenAndServe(pRouter *mux.Router) {
 func main() {
 	lRouter := mux.NewRouter()
 	lApp    := NewApp(lRouter)
+
+	lApp.MailHandler.Run()
 	lApp.ListenAndServe(lRouter)
 }
 

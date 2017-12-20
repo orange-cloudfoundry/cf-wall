@@ -60,7 +60,10 @@
      div.dataTables_filter label input {
        width:80% !important;
      }
-
+     #app-msg-content, #app-errors-content {
+       max-height: calc(100vh - 110px);
+       overflow-y: scroll;
+     }
     </style>
   </head>
   <body>

@@ -1,4 +1,3 @@
-
 jQuery.fn.outerHTML = function(s) {
   return (s)
     ? this.before(s).remove()
@@ -74,7 +73,6 @@ function Api(p_app) {
       done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
         self.apiError(p_endpoint, p_data);
-        p_callback(undefined);
       });
   };
 
@@ -117,6 +115,12 @@ function Api(p_app) {
   self.getBuildpacks = function(p_callback) {
     Pace.ignore(function() {
       self.get("/v1/buildpacks", p_callback);
+    });
+  };
+
+  self.getMailCount = function(p_callback) {
+    Pace.ignore(function() {
+      self.get("/v1/mail/status", p_callback);
     });
   };
 };
@@ -186,19 +190,17 @@ function Message(p_app) {
 
   self.onMailSent = function(p_data) {
     self.enableSend();
-    if (p_data != undefined) {
-      p_app.addMessage("Message successfully.");
-      p_app.addMessage("from: "    + p_data["from"]);
-      p_app.addMessage("subject: " + p_data["subject"]);
-      p_app.addMessage("copy: ");
-      $.each(p_data["copy"], function(c_idx, c_val) {
-        p_app.addMessage(c_val);
-      });
-      p_app.addMessage("recipients: ");
-      $.each(p_data["recipients"], function(c_idx, c_val) {
-        p_app.addMessage(c_val);
-      });
-    }
+    p_app.addMessage("Mails successfully enqueued.");
+    // p_app.addMessage("from: "    + p_data["from"]);
+    // p_app.addMessage("subject: " + p_data["subject"]);
+    // p_app.addMessage("copy: ");
+    // $.each(p_data["copy"], function(c_idx, c_val) {
+    //   p_app.addMessage(c_val);
+    // });
+    // p_app.addMessage("recipients: ");
+    // $.each(p_data["recipients"], function(c_idx, c_val) {
+    //   p_app.addMessage(c_val);
+    // });
   };
 
   self.send = function() {
@@ -695,8 +697,7 @@ function App() {
 
   self.errors = [];
   self.msg    = [];
-
-  self.ui = {
+  self.ui     = {
     error : {
       modal:   $("#app-errors"),
       content: $("#app-errors-content")
@@ -704,7 +705,8 @@ function App() {
     msg : {
       modal:   $("#app-msg"),
       content: $("#app-msg-content")
-    }
+    },
+    mailcount: $("#mailcount")
   };
 
   self.addError = function(p_error) {
@@ -731,6 +733,15 @@ function App() {
         }
       });
     });
+  };
+
+  self.onUpdateMailCount = function(p_data) {
+    var l_count = p_data["outgoing"];
+    self.ui.mailcount.html(l_count);
+  };
+
+  self.updateMailCount = function() {
+    self.api.getMailCount(self.onUpdateMailCount);
   };
 
   self.onErrorModalHidden = function() {
@@ -764,7 +775,14 @@ function App() {
     self.message = new Message(self);
     self.api     = new Api(self);
     self.api.init(self.initTables);
+
+    self.updateMailCount();
+    window.setInterval(self.updateMailCount, 60 * 1000);
   };
 
   self.init();
 }
+
+// Local Variables:
+// ispell-local-dictionary: "american"
+// End:
