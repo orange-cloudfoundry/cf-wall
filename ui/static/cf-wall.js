@@ -212,6 +212,26 @@ function Message(p_app) {
     // });
   };
 
+
+  self.saveMessage = function() {
+    var l_sub = self.ui.msg.subject.val();
+    var l_msg = self.ui.msg.content.val();
+    $.cookie("subject", l_sub, { expires: 30 });
+    $.cookie("message", l_msg, { expires: 30 });
+  };
+
+  self.restoreMessage = function() {
+    var l_sub = $.cookie("subject");
+    var l_msg = $.cookie("message");
+
+    if (l_sub != undefined) {
+      self.ui.msg.subject.val(l_sub);
+    }
+    if (l_msg != undefined) {
+      self.ui.msg.content.val(l_msg);
+    }
+  };
+
   self.send = function() {
     if (false == p_app.targets.validate())
       return false;
@@ -225,6 +245,7 @@ function Message(p_app) {
     l_data["recipients"] = l_data["externals"];
     delete l_data["externals"];
 
+    self.saveMessage();
     if (p_app.targets.targetAll()) {
       delete l_data["orgs"];
       delete l_data["spaces"];
@@ -257,6 +278,7 @@ function Message(p_app) {
     });
 
     self.bind();
+    self.restoreMessage();
   };
 
   self.init();
