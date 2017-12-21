@@ -48,27 +48,36 @@ function Api(p_app) {
     });
   };
 
-  self.get = function(p_endpoint, p_callback) {
+  self.createHeaders = function(p_passToken) {
+    var l_headers = {};
+    if (p_passToken == undefined)
+      p_passToken = true;
+    if (true == p_passToken) {
+      l_headers["Authorization"] = self.token;
+    }
+    return l_headers;
+  };
+
+  self.get = function(p_endpoint, p_callback, p_passToken) {
     $.ajax({
-      url : p_endpoint,
-      type : "GET",
-      headers: { "Authorization" : self.token }
+      url:     p_endpoint,
+      type:    "GET",
+      headers: self.createHeaders(p_passToken)
     }).
       done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
         self.apiError(p_endpoint, p_data);
-        p_callback(undefined);
       });
   };
 
-  self.postJson = function(p_endpoint, p_data, p_callback) {
+  self.postJson = function(p_endpoint, p_data, p_callback, p_passToken) {
     $.ajax({
-      url : p_endpoint,
-      data: JSON.stringify(p_data),
-      type : "POST",
-      contentType:"application/json; charset=utf-8",
-      dataType:"json",
-      headers: { "Authorization" : self.token }
+      url:         p_endpoint,
+      data:        JSON.stringify(p_data),
+      type:        "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType:    "json",
+      headers:     self.createHeaders(p_passToken)
     }).
       done(function(p_data) { p_callback(p_data); }).
       fail(function(p_data) {
@@ -120,7 +129,7 @@ function Api(p_app) {
 
   self.getMailCount = function(p_callback) {
     Pace.ignore(function() {
-      self.get("/v1/mail/status", p_callback);
+      self.get("/v1/mail/status", p_callback, false);
     });
   };
 };
