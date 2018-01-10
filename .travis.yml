@@ -4,7 +4,7 @@ go:
 
 install:
 - go get -u github.com/golang/dep/cmd/dep
-- go dep ensure
+- dep ensure
 - npm install -g bower
 - cd ui/static && bower install
 
