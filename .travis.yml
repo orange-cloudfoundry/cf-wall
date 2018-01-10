@@ -24,6 +24,7 @@ deploy:
     - _build/windows_amd64/cf-wall_windows_amd64.zip
     - _build/windows_386/cf-wall_windows_386.zip
     - _build/darwin_amd64/cf-wall_darwin_amd64.zip
+  skip_cleanup: true
   on:
-#    tags: true
+    #tags: true
     repo: orange-cloudfoundry/cf-wall
