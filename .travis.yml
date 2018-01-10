@@ -26,5 +26,5 @@ deploy:
     - _build/darwin_amd64/cf-wall_darwin_amd64.zip
   skip_cleanup: true
   on:
-    #tags: true
+    tags: true
     repo: orange-cloudfoundry/cf-wall
