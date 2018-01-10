@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 
 BASEDIR=$(readlink -m $(dirname $0)/../..)
@@ -16,7 +17,7 @@ function build_bin {
 
   echo "building binary : cf-wall_${l_os}_${l_arch}${l_ext}"
   cd ${BASEDIR}
-  GOARCH=amd64 GOOS=windows go build -o ${l_dstDir}/cf-wall_${l_os}_${l_arch}${l_ext}
+  GOARCH=${l_arch} GOOS=${l_os} go build -o ${l_dstDir}/cf-wall_${l_os}_${l_arch}${l_ext}
 }
 
 
@@ -33,11 +34,17 @@ function build_archive {
   cp -r ${BASEDIR}/ui/templates               ${l_dir}/ui/
   cp -r ${BASEDIR}/ui/static                  ${l_dir}/ui/
 
-  build_bin ${l_arch} ${l_os} ${l_dir}
+  build_bin ${l_arch} ${l_os} ${l_dir} || {
+    echo 2>&1 "error: cannot build binary for ${l_os}/${l_arch}"
+    return 1
+  }
 
   echo "building archive : cf-wall_${l_os}_${l_arch}.zip"
   cd ${OUTDIR}/${l_os}_${l_arch} && \
-      zip -q -r cf-wall_${l_os}_${l_arch}.zip cf-wall
+      zip -q -r cf-wall_${l_os}_${l_arch}.zip cf-wall || {
+    echo 2>&1 "error: error while creating archive for ${l_os}/${l_arch}"
+    return 1
+  }
 }
 
 build_archive amd64 windows
