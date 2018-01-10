@@ -1,0 +1,47 @@
+#!/bin/bash
+
+
+BASEDIR=$(readlink -m $(dirname $0)/../..)
+OUTDIR=${BASEDIR}/_build
+
+function build_bin {
+  l_arch=$1;   shift
+  l_os=$1;     shift
+  l_dstDir=$1; shift
+  l_ext=""
+
+  if [ "${l_os}" == "windows" ]; then
+      l_ext=".exe"
+  fi
+
+  echo "building binary : cf-wall_${l_os}_${l_arch}${l_ext}"
+  cd ${BASEDIR}
+  GOARCH=amd64 GOOS=windows go build -o ${l_dstDir}/cf-wall_${l_os}_${l_arch}${l_ext}
+}
+
+
+function build_archive {
+  l_arch=$1; shift
+  l_os=$1; shift
+  l_dir=${OUTDIR}/${l_os}_${l_arch}/cf-wall
+
+  rm -rf ${l_dir}
+  mkdir -p ${l_dir}
+
+  mkdir -p ${l_dir}/ui
+  cp    ${BASEDIR}/config/cf-wall.json.sample ${l_dir}/
+  cp -r ${BASEDIR}/ui/templates               ${l_dir}/ui/
+  cp -r ${BASEDIR}/ui/static                  ${l_dir}/ui/
+
+  build_bin ${l_arch} ${l_os} ${l_dir}
+
+  echo "building archive : cf-wall_${l_os}_${l_arch}.zip"
+  cd ${OUTDIR}/${l_os}_${l_arch} && \
+      zip -q -r cf-wall_${l_os}_${l_arch}.zip cf-wall
+}
+
+build_archive amd64 windows
+build_archive 386   windows
+build_archive amd64 linux
+build_archive 386   linux
+build_archive amd64 darwin

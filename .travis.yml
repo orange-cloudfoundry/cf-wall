@@ -1,0 +1,29 @@
+language: go
+go:
+- 1.9
+
+install:
+- go get -u github.com/golang/dep/cmd/dep
+- go dep ensure
+- npm install -g bower
+- cd ui/static && bower install
+
+script:
+- go build -o cf-wall
+
+after_success:
+- bin/build/all
+
+deploy:
+  provider: releases
+  api_key:
+    secure: DW0Aaf3mrTSQWRUMPkCSPdNsMZY+GMDS1uEO441MQQygrx9d1Q4u8wIRllguxkPYywJ7zo3prqhrseA58zZqaP1eRwhrGEP/iT7j+7bconp6mPzAiWlxXUwNwFl/zBHp5NkL4AfbtIJzSqG6lo77HuZa9NSDTqxaMMXowN0T54JuppWHtg2YOQTwpHAe30YR029xq7f1VEAIjAtvun0Ngi1y/Mtnf9sVJQMVpKqsjqemDDLXO7sRSp5NMT0mD13pIDmQdVIhOB0X2g2OfQNjZA5TfRcHXE2H5iiFByiTFulpvvaTjFqApLFgSN0LQYGDHSwicaROjauMq3fRHA8LlgwP20qAYErDz6AxQoylc+paJzX0Yp+LfLMrcFJsRRhkCi7mT9sNL4eR0ciuM2cUeOg09Oo+bAvQq11bRli0mpLrWEJmBZprIQZJW4RQtzzhjrUFMP2b384fp8md7R69rqXFFDmGRD6FETfiW+JSqOGOCvc6TT4xpZHGBvtbImQNTIwThS1tNMc8TNQO0aIwHa71wnlsvUwHxLBjjq1H3Ae5kCEydC+e+0lPR2g7iq4PGF1RlFnXeHZnKG39pn1mKsGfsVS02eL/px+btCj31tQQnVqcEYYLHgnna4yDMW0jFGRS3tky8zeMozXglYOsYG0TzEM2gn/Tr5gnBEflNmk=
+  file:
+    - _build/linux_amd64/cf-wall_linux_amd64.zip
+    - _build/linux_386/cf-wall_linux_386.zip
+    - _build/windows_amd64/cf-wall_windows_amd64.zip
+    - _build/windows_386/cf-wall_windows_386.zip
+    - _build/darwin_amd64/cf-wall_darwin_amd64.zip
+  on:
+#    tags: true
+    repo: orange-cloudfoundry/cf-wall
