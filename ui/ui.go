@@ -4,6 +4,7 @@ import "net/http"
 import "errors"
 import "html/template"
 import "os"
+import "path/filepath"
 import "github.com/gorilla/mux"
 import log "github.com/sirupsen/logrus"
 import "github.com/orange-cloudfoundry/cf-wall/core"
@@ -40,9 +41,14 @@ func createTemplates() (*template.Template, error) {
 		"mkDict":  mkDict,
 	}
 
+	lBinDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	lTpl, lErr := template.New("index.tpl").
 		Funcs(template.FuncMap(lFuncMap)).
-		ParseFiles("ui/templates/index.tpl", "ui/templates/header.tpl", "ui/templates/table.tpl", "ui/templates/accordion.tpl")
+		ParseFiles(
+		filepath.Join(lBinDir, "ui/templates/index.tpl"),
+		filepath.Join(lBinDir, "ui/templates/header.tpl"),
+		filepath.Join(lBinDir, "ui/templates/table.tpl"),
+		filepath.Join(lBinDir, "ui/templates/accordion.tpl"))
 
 	if lErr != nil {
 		log.WithError(lErr).Error("unable to parse ui template")
