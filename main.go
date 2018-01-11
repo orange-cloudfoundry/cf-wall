@@ -9,6 +9,7 @@ import "github.com/orange-cloudfoundry/cf-wall/core"
 import "github.com/orange-cloudfoundry/cf-wall/api"
 import "github.com/orange-cloudfoundry/cf-wall/ui"
 import "github.com/orange-cloudfoundry/cf-wall/mail"
+import "path/filepath"
 
 var GApp App
 
@@ -70,6 +71,10 @@ func (self *App) ListenAndServe(pRouter *mux.Router) {
 
 
 func main() {
+
+	lBinDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	os.Chdir(lBinDir)
+
 	lRouter := mux.NewRouter()
 	lApp    := NewApp(lRouter)
 
