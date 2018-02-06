@@ -46,15 +46,13 @@ func NewUaaCli(pConf *AppConfig) (*UaaCli, error) {
 }
 
 func (self *UaaCli) ensureToken() error {
-	if self.Token == "" {
-		log.Info("fetching client token from UAA api")
-		lTok, lErr := self.Client.FetchToken(true)
-		if lErr != nil {
-			log.WithError(lErr).Error("unable to fetch UAA client token")
-			return lErr
-		}
-		self.Token = lTok.AccessToken
+	log.Info("fetching client token from UAA api")
+	lTok, lErr := self.Client.FetchToken(true)
+	if lErr != nil {
+		log.WithError(lErr).Error("unable to fetch UAA client token")
+		return lErr
 	}
+	self.Token = lTok.AccessToken
 	return nil
 }
 
