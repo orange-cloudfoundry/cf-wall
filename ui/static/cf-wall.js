@@ -216,18 +216,17 @@ function Message(p_app) {
   self.saveMessage = function() {
     var l_sub = self.ui.msg.subject.val();
     var l_msg = self.ui.msg.content.val();
-    $.cookie("subject", l_sub, { expires: 30 });
-    $.cookie("message", l_msg, { expires: 30 });
+    window.localStorage.setItem("subject", l_sub);
+    window.localStorage.setItem("message", l_msg);
   };
 
   self.restoreMessage = function() {
-    var l_sub = $.cookie("subject");
-    var l_msg = $.cookie("message");
-
-    if (l_sub != undefined) {
+    var l_sub = window.localStorage.getItem("subject");
+    var l_msg = window.localStorage.getItem("message");
+    if (l_sub != null) {
       self.ui.msg.subject.val(l_sub);
     }
-    if (l_msg != undefined) {
+    if (l_msg != null) {
       self.ui.msg.content.val(l_msg);
     }
   };
