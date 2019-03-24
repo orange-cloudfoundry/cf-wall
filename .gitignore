@@ -6,5 +6,4 @@ ui/static/bower_components/*
 ui/static/token.js
 config/cf-wall-dev.json
 manifest-dev.yml
-vendor/*.*
 _build
