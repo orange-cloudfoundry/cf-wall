@@ -2,7 +2,6 @@ cf-wall
 .env.json
 config/cf-wall.json
 config/local.yml
-ui/static/bower_components/*
 ui/static/token.js
 config/cf-wall-dev.json
 manifest-dev.yml
