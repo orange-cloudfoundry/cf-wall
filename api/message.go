@@ -13,13 +13,15 @@ import "github.com/golang-commonmark/markdown"
 import log "github.com/sirupsen/logrus"
 import "gopkg.in/gomail.v2"
 import "github.com/orange-cloudfoundry/cf-wall/core"
+import "sync"
 
 //MessageReqCtx --
 type MessageReqCtx struct {
-	CCCli     core.CFClient
-	UserMails map[string]string
-	ReqData   MessageRequest
-	ResData   MessageResponse
+	CCCli          core.CFClient
+	UserMails      map[string]string
+	ReqData        MessageRequest
+	ResData        MessageResponse
+	NbMaxGetParams int
 
 	apps   []cfclient.App
 	spaces []string
@@ -106,10 +108,11 @@ func (m *MessageHandler) createCtx(pUsers map[string]string, pReq *http.Request)
 	}
 
 	ctx := MessageReqCtx{
-		CCCli:     cccli,
-		UserMails: pUsers,
-		ReqData:   MessageRequest{},
-		ResData:   MessageResponse{},
+		CCCli:           cccli,
+		UserMails:       pUsers,
+		NbMaxGetParams : m.Config.NbMaxGetParams,
+		ReqData:         MessageRequest{},
+		ResData:         MessageResponse{},
 	}
 
 	decoder := json.NewDecoder(pReq.Body)
@@ -429,43 +432,91 @@ func (m *MessageReqCtx) getApps() []cfclient.App {
 }
 
 func (m *MessageReqCtx) getOrgsUsers(pList []string) cfclient.Users {
-	orgs := strings.Join(pList, ",")
-	query := url.Values{}
-	query.Add("q", fmt.Sprintf("organization_guid IN %s", orgs))
+	lNbElements := len(pList)
+	var orgs = ""
+	var lUsers []cfclient.User
+	var wg sync.WaitGroup
 
-	log.WithFields(log.Fields{"orgs": orgs}).
-		Debug("reading org users")
+	queue := make(chan []cfclient.User, (lNbElements/m.NbMaxGetParams)+1)
 
-	users, err := m.CCCli.ListUsersByQuery(query)
-	if err != nil {
-		uerr := errors.New("unable to fetch users from CC api")
-		log.WithError(err).Error(uerr.Error())
-		panic(core.NewHttpError(err, 500, 20))
+	for j := 0; j < lNbElements; j += m.NbMaxGetParams {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+			
+			if lNbElements < i+50 {
+				orgs = strings.Join(pList[i:lNbElements], ",")
+			} else {
+				orgs = strings.Join(pList[i:i+50], ",")
+			}
+
+			query := url.Values{}
+			query.Add("q", fmt.Sprintf("organization_guid IN %s", orgs))
+
+			log.WithFields(log.Fields{"orgs": orgs}).
+				Debug("reading org users")
+
+			users, err := m.CCCli.ListUsersByQuery(query)
+			if err != nil {
+				uerr := errors.New("unable to fetch users from CC api")
+				log.WithError(err).Error(uerr.Error())
+				panic(core.NewHttpError(err, 500, 20))
+			}
+			queue <- users
+		}(j)
 	}
+	wg.Wait()
+	close(queue)
 
-	log.WithFields(log.Fields{"count": len(users)}).
-		Debug("fetched users")
-	return users
+	for users := range queue {
+		lUsers = append(lUsers, users...)
+	}
+	return lUsers
 }
 
 func (m *MessageReqCtx) getSpacesUsers(pList []string) cfclient.Users {
-	spaces := strings.Join(pList, ",")
-	query := url.Values{}
-	query.Add("q", fmt.Sprintf("space_guid IN %s", spaces))
+	lNbElements := len(pList)
+	var spaces = ""
+	var lUsers []cfclient.User
+	var wg sync.WaitGroup
 
-	log.WithFields(log.Fields{"spaces": spaces}).
-		Debug("reading space users")
+	queue := make(chan []cfclient.User, (lNbElements/m.NbMaxGetParams)+1)
 
-	users, err := m.CCCli.ListUsersByQuery(query)
-	if err != nil {
-		uerr := errors.New("unable to fetch users from CC api")
-		log.WithError(err).Error(uerr.Error())
-		panic(core.NewHttpError(err, 500, 20))
+	for j := 0; j < lNbElements; j += m.NbMaxGetParams {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+			
+			if lNbElements < i+50 {
+				spaces = strings.Join(pList[i:lNbElements], ",")
+			} else {
+				spaces = strings.Join(pList[i:i+50], ",")
+			}
+
+			query := url.Values{}
+			query.Add("q", fmt.Sprintf("space_guid IN %s", spaces))
+
+			log.WithFields(log.Fields{"spaces": spaces}).
+				Debug("reading space users")
+
+			users, err := m.CCCli.ListUsersByQuery(query)
+			if err != nil {
+				uerr := errors.New("unable to fetch users from CC api")
+				log.WithError(err).Error(uerr.Error())
+				panic(core.NewHttpError(err, 500, 20))
+			}
+			queue <- users
+		}(j)
 	}
+	wg.Wait()
+	close(queue)
 
-	log.WithFields(log.Fields{"count": len(users)}).
-		Debug("fetched users")
-	return users
+	for users := range queue {
+		lUsers = append(lUsers, users...)
+	}
+	return lUsers
 }
 
 // Local Variables:
