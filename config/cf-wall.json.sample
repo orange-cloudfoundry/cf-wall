@@ -11,5 +11,6 @@
   "mail-dry"          : false,
   "mail-cc"           : [],
   "mail-tag"          : "[cf-wall]",
+  "nb-max-get-params" : 50
 }
 
