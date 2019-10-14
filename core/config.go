@@ -31,6 +31,7 @@ type AppConfig struct {
 	MailRateCount    int    `json:"mail-rate-count"    cloud:"mail-rate-count"`
 	MailRateDuration int    `json:"mail-rate-duration" cloud:"mail-rate-duration"`
 	ReloadTemplates  bool   `json:"reload-templates"   cloud:"reload-templates"`
+	NbMaxGetParams   int    `json:"nb-max-get-params"  cloud:"nb-max-get-params"`
 }
 
 func (self *MailCC) String() string {
@@ -96,6 +97,7 @@ func (self *AppConfig) parseCmdLine() {
 	flag.IntVar(&self.MailRateCount, "mail-rate-count", self.MailRateCount, "Limit number of mail sent per timed window")
 	flag.IntVar(&self.MailRateDuration, "mail-rate-duration", self.MailRateDuration, "Duration (in seconds) of timed window")
 	flag.BoolVar(&self.ReloadTemplates, "reload-templates", self.ReloadTemplates, "Reload ui template on each request (dev)")
+	flag.IntVar(&self.NbMaxGetParams, "nb-max-get-params", self.NbMaxGetParams, "Maximum number of get parameters for http requests")
 
 	flag.Var(&self.MailCc, "mail-cc", "List of additional recipients to all mails (can give multiple times)")
 	flag.Parse()

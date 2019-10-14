@@ -125,6 +125,9 @@ Then adapt values for your environment.
   // tag to automatically prepend to mail subjects
   "mail-tag": "[cf-wall]",
 
+  // Maximum number of get parameters for http requests
+  "nb-max-get-params": 50,
+
   // prase html template at each requests (test only)
   "reload-templates" : false
 }
