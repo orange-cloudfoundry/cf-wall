@@ -224,6 +224,7 @@ func (m *MessageHandler) sendMessages(
 		msg.SetHeader("From", pFrom)
 		msg.SetHeader("To", cDest)
 		msg.SetHeader("Subject", pSub)
+		msg.SetHeader("Auto-submitted", "auto-generated")
 		msg.SetBody("text/html", pBody)
 		m.queue <- msg
 	}
