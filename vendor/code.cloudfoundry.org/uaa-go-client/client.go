@@ -16,7 +16,7 @@ import (
 	"time"
 
 	trace "code.cloudfoundry.org/trace-logger"
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 
 	"code.cloudfoundry.org/lager"
 
@@ -436,7 +436,7 @@ func (u *UaaClient) RegisterOauthClient(oauthClient *schema.OauthClient) (*schem
 		return nil, ErrClientAlreadyExists
 	}
 
-	if response.StatusCode != http.StatusOK {
+	if response.StatusCode != http.StatusCreated {
 		return nil, err
 	}
 
