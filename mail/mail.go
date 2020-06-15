@@ -1,4 +1,5 @@
 package mail
+
 import "github.com/orange-cloudfoundry/cf-wall/core"
 import "github.com/cloudfoundry-community/gautocloud"
 import "github.com/cloudfoundry-community/gautocloud/connectors/smtp/raw"
@@ -24,7 +25,7 @@ type StatusResponse struct {
 func NewMailHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MailHandler, error) {
 	lObj := MailHandler{
 		config: pConf,
-		Queue: make(chan *gomail.Message, 5000),
+		Queue:  make(chan *gomail.Message, 5000),
 	}
 
 	pRouter.Path("/v1/mail/status").
@@ -40,7 +41,6 @@ func NewMailHandler(pConf *core.AppConfig, pRouter *mux.Router) (*MailHandler, e
 	log.WithFields(log.Fields{"smtp": lObj.opts}).
 		Debug("fetched settings from gautocloud")
 
-
 	return &lObj, nil
 }
 
@@ -51,13 +51,12 @@ func (self *MailHandler) send(pMsg *gomail.Message) {
 		self.opts.User,
 		self.opts.Password)
 	lSender, lErr := lDialer.Dial()
-	defer lSender.Close()
-
 	if lErr != nil {
 		lUerr := errors.New("could not connect mail server")
 		log.WithError(lErr).Error(lUerr.Error())
 	}
 
+	defer lSender.Close()
 	log.WithFields(log.Fields{}).Debug("sending mail")
 	if false == self.config.MailDry {
 		lErr = gomail.Send(lSender, pMsg)
@@ -75,25 +74,25 @@ func (self *MailHandler) checkInterval(pStart *time.Time, pCount *int) {
 	// no event on last interval
 	if lElapsed > lSize {
 		log.WithFields(log.Fields{
-			"elapsed(s)" : lElapsed.Seconds(),
-			"size(s)"    : lSize.Seconds(),
-			"count"      : *pCount,
+			"elapsed(s)": lElapsed.Seconds(),
+			"size(s)":    lSize.Seconds(),
+			"count":      *pCount,
 		}).Debug("last interval too old, reset")
 		*pStart = time.Now()
 		*pCount = 0
 	} else if *pCount < self.config.MailRateCount {
 		log.WithFields(log.Fields{
-			"elapsed(s)" : lElapsed.Seconds(),
-			"size(s)"    : lSize.Seconds(),
-			"count"      : *pCount,
+			"elapsed(s)": lElapsed.Seconds(),
+			"size(s)":    lSize.Seconds(),
+			"count":      *pCount,
 		}).Debug("request within rate limit")
 	} else {
 		lDelay := lSize - lElapsed
 		log.WithFields(log.Fields{
-			"elapsed(s)" : lElapsed.Seconds(),
-			"size(s)"    : lSize.Seconds(),
-			"count"      : *pCount,
-			"delay"      : lDelay.Seconds(),
+			"elapsed(s)": lElapsed.Seconds(),
+			"size(s)":    lSize.Seconds(),
+			"count":      *pCount,
+			"delay":      lDelay.Seconds(),
 		}).Debug("reached rate limit, sleeping")
 		time.Sleep(lDelay)
 		*pStart = time.Now()
@@ -118,7 +117,7 @@ func (self *MailHandler) Run() {
 }
 
 func (self *MailHandler) HandleMessage(pRes http.ResponseWriter, pReq *http.Request) {
-	core.WriteJson(pRes, StatusResponse{ len(self.Queue) })
+	core.WriteJson(pRes, StatusResponse{len(self.Queue)})
 }
 
 func init() {
