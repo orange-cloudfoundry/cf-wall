@@ -54,6 +54,7 @@ func (self *MailHandler) send(pMsg *gomail.Message) {
 	if lErr != nil {
 		lUerr := errors.New("could not connect mail server")
 		log.WithError(lErr).Error(lUerr.Error())
+		return
 	}
 
 	defer lSender.Close()
