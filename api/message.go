@@ -383,19 +383,47 @@ func (m *MessageReqCtx) mapApps(pMap func(*cfclient.App)) {
 func (m *MessageReqCtx) getServiceBindings(pList []string) []cfclient.ServiceBinding {
 	log.Debug("reading service bindings")
 
-	query := url.Values{}
-	query.Set("results-per-page", "100")
-	query.Add("q", fmt.Sprintf("service_instance_guid IN %s", strings.Join(pList, ",")))
-	res, err := m.CCCli.ListServiceBindingsByQuery(query)
-	if err != nil {
-		uerr := errors.New("unable to fetch service bindings from CC api")
-		log.WithError(err).Error(uerr.Error())
-		panic(core.NewHttpError(err, 500, 50))
-	}
-	log.WithFields(log.Fields{"count": len(res)}).
-		Debug("fetched service bindings")
+	lNbElements := len(pList)
+    var serviceInstanceGUIDs = ""
+    var lServiceBindings []cfclient.ServiceBinding
+    var wg sync.WaitGroup
 
-	return res
+    queue := make(chan []cfclient.ServiceBinding, (lNbElements/m.NbMaxGetParams)+1)
+
+    for j := 0; j < lNbElements; j += m.NbMaxGetParams {
+        wg.Add(1)
+
+        go func(i int) {
+            defer wg.Done()
+
+            if lNbElements < i+50 {
+                serviceInstanceGUIDs = strings.Join(pList[i:lNbElements], ",")
+            } else {
+                serviceInstanceGUIDs = strings.Join(pList[i:i+50], ",")
+            }
+
+            query := url.Values{}
+            query.Add("q", fmt.Sprintf("service_instance_guid IN %s", serviceInstanceGUIDs))
+
+            log.WithFields(log.Fields{"serviceInstanceGUIDs": serviceInstanceGUIDs}).
+                Debug("reading service instance bindings")
+
+            serviceBindings, err := m.CCCli.ListServiceBindingsByQuery(query)
+            if err != nil {
+                uerr := errors.New("unable to fetch service bindings from CC api")
+                log.WithError(err).Error(uerr.Error())
+                panic(core.NewHttpError(err, 500, 50))
+            }
+            queue <- serviceBindings
+        }(j)
+    }
+    wg.Wait()
+    close(queue)
+
+    for serviceBindings := range queue {
+        lServiceBindings = append(lServiceBindings, serviceBindings...)
+    }
+    return lServiceBindings
 }
 
 func (m *MessageReqCtx) getServiceInstances() []cfclient.ServiceInstance {
