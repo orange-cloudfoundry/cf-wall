@@ -9,4 +9,4 @@ applications:
       - cf-wall-smtp
     env:
       GOPACKAGENAME: github.com/orange-cloudfoundry/cf-wall
-      GOVERSION: go1.12
+      GOVERSION: go1.15
