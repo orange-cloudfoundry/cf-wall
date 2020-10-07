@@ -11,7 +11,6 @@ require (
 	github.com/cloudfoundry-community/gautocloud v1.1.6
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20200413172050-18981bf12b4b
 	github.com/cloudfoundry-community/go-cfenv v1.18.0 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang-commonmark/html v0.0.0-20180910111043-7d7c804e1d46 // indirect
 	github.com/golang-commonmark/linkify v0.0.0-20180910111149-f05efb453a0e // indirect
 	github.com/golang-commonmark/markdown v0.0.0-20180910011815-a8f139058164
@@ -20,8 +19,9 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
-	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.9.0
+	github.com/nxadm/tail v1.4.5 // indirect
+	github.com/onsi/ginkgo v1.14.1
+	github.com/onsi/gomega v1.10.2
 	github.com/opennota/wd v0.0.0-20180911144301-b446539ab1e7 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/errors v0.9.1
@@ -39,5 +39,4 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ini.v1 v1.62.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
