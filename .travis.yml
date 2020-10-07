@@ -1,6 +1,6 @@
 language: go
 go:
-- 1.12
+- 1.15
 install:
 - npm install -g bower
 - cd ui/static && bower install && cd -

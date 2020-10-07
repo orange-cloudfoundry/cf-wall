@@ -1,6 +1,6 @@
 module github.com/orange-cloudfoundry/cf-wall
 
-go 1.14
+go 1.15
 
 require (
 	code.cloudfoundry.org/clock v1.0.0
