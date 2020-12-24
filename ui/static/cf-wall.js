@@ -4,6 +4,25 @@ jQuery.fn.outerHTML = function(s) {
     : jQuery("<p>").append(this.eq(0).clone()).html();
 };
 
+// multi emails management
+jQuery.validator.addMethod(
+    "multiemails",
+    function(value, element) {
+      if (this.optional(element))
+        return true;
+      var emails = value.split(/[;,]+/);
+      valid = true;
+      for (var i in emails) {
+        value = emails[i];
+        valid = valid &&
+            jQuery.validator.methods.email.call(this, $.trim(value), element);
+      }
+      return valid;
+    },
+
+    jQuery.validator.messages.multiemails
+);
+
 function templateEl(p_el, p_vars, p_callback) {
   var l_content = $(p_el).html();
   for (var c_key in p_vars) {
@@ -418,7 +437,10 @@ function Targets(p_app) {
 
   self.onModalAddClick = function() {
     if (true == self.ui.modal_form.valid()) {
-      self.addTarget("externals", self.ui.modal_mail.val(), self.ui.modal_mail.val());
+      var emails = self.ui.modal_mail.val().split(/[;,]+/);
+      for (var i in emails) {
+        self.addTarget("externals", emails[i], emails[i]);
+      }
       self.ui.modal.modal("hide");
       self.ui.modal_mail.val("");
     };
@@ -435,7 +457,16 @@ function Targets(p_app) {
     self.hideError();
     self.bind();
     self.ui.modal_form.validate({
-      errorClass: "text-danger"
+      errorClass: "text-danger",
+      rules: {
+        emails: { required: true, multiemails: true }
+      },
+      messages: {
+        emails: {
+          required: "This field is required.",
+          multiemails: "Please enter a valid email list (separators are ',' or ';')."
+        }
+      }
     });
   };
 

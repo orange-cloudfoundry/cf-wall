@@ -176,9 +176,9 @@
           <div class="modal-body">
             <form class="form-horizontal">
               <div class="form-group">
-                <label class="col-xs-2 control-label" for="email">Email</label>
+                <label class="col-xs-2 control-label" for="emails">Email</label>
                 <div class="col-xs-10">
-                  <input type="email" class="required email form-control" id="email" placeholder="name@domain.com">
+                  <input type="text" name="emails" class="required emails form-control" id="emails" placeholder="name@domain.com">
                 </div>
               </div>
             </form>
