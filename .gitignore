@@ -6,3 +6,6 @@ ui/static/token.js
 config/cf-wall-dev.json
 manifest-dev.yml
 _build
+/config.json
+/config.yml
+/dist
