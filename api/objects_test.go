@@ -82,7 +82,17 @@ func (self *FakeCli) ListSpacesByQuery(url.Values) ([]cfclient.Space, error) {
 	return []cfclient.Space{}, self.Error
 }
 
+func (self *FakeCli) ListAppsByQuery(url.Values) ([]cfclient.App, error) {
+	return []cfclient.App{}, self.Error
+}
 
+func (self *FakeCli) ListServiceInstancesByQuery(query url.Values) ([]cfclient.ServiceInstance, error) {
+	return []cfclient.ServiceInstance{}, self.Error
+}
+
+func (self *FakeCli) ListServiceBindingsByQuery(query url.Values) ([]cfclient.ServiceBinding, error) {
+	return []cfclient.ServiceBinding{}, self.Error
+}
 
 func assertJson(pRes *http.Response, pStruct interface{}) {
 	lVal := pRes.Header.Get("Content-Type")
@@ -156,9 +166,9 @@ var _ = Describe("Objects", func() {
 					Code  int    `json:"code"`
 					Error string `json:"error"`
 				}{}
-				assertStatusKo(lRes, lErr, 400)
+				assertStatusKo(lRes, lErr, 500)
 				assertJson(lRes, &lDescr)
-				Expect(lDescr.Code).To(Equal(10), "user code 10")
+				Expect(lDescr.Code).To(Equal(50), "user code 10")
 			})
 
 			It("get orgs", func() {
@@ -167,9 +177,9 @@ var _ = Describe("Objects", func() {
 					Code  int    `json:"code"`
 					Error string `json:"error"`
 				}{}
-				assertStatusKo(lRes, lErr, 400)
+				assertStatusKo(lRes, lErr, 500)
 				assertJson(lRes, &lDescr)
-				Expect(lDescr.Code).To(Equal(10), "user code 10")
+				Expect(lDescr.Code).To(Equal(50), "user code 10")
 			})
 
 			It("get users", func() {
@@ -178,9 +188,9 @@ var _ = Describe("Objects", func() {
 					Code  int    `json:"code"`
 					Error string `json:"error"`
 				}{}
-				assertStatusKo(lRes, lErr, 400)
+				assertStatusKo(lRes, lErr, 500)
 				assertJson(lRes, &lDescr)
-				Expect(lDescr.Code).To(Equal(10), "user code 10")
+				Expect(lDescr.Code).To(Equal(50), "user code 10")
 			})
 
 			It("get services", func() {
@@ -189,9 +199,9 @@ var _ = Describe("Objects", func() {
 					Code  int    `json:"code"`
 					Error string `json:"error"`
 				}{}
-				assertStatusKo(lRes, lErr, 400)
+				assertStatusKo(lRes, lErr, 500)
 				assertJson(lRes, &lDescr)
-				Expect(lDescr.Code).To(Equal(10), "user code 10")
+				Expect(lDescr.Code).To(Equal(50), "user code 10")
 			})
 
 			It("get buildpacks", func() {
@@ -200,9 +210,9 @@ var _ = Describe("Objects", func() {
 					Code  int    `json:"code"`
 					Error string `json:"error"`
 				}{}
-				assertStatusKo(lRes, lErr, 400)
+				assertStatusKo(lRes, lErr, 500)
 				assertJson(lRes, &lDescr)
-				Expect(lDescr.Code).To(Equal(10), "user code 10")
+				Expect(lDescr.Code).To(Equal(50), "user code 10")
 			})
 
 			It("get org spaces", func() {
@@ -211,9 +221,9 @@ var _ = Describe("Objects", func() {
 					Code  int    `json:"code"`
 					Error string `json:"error"`
 				}{}
-				assertStatusKo(lRes, lErr, 400)
+				assertStatusKo(lRes, lErr, 500)
 				assertJson(lRes, &lDescr)
-				Expect(lDescr.Code).To(Equal(10), "user code 10")
+				Expect(lDescr.Code).To(Equal(50), "user code 10")
 			})
 		})
 	})

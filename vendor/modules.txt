@@ -32,7 +32,7 @@ github.com/cloudfoundry-community/gautocloud/decoder
 github.com/cloudfoundry-community/gautocloud/interceptor
 github.com/cloudfoundry-community/gautocloud/loader
 github.com/cloudfoundry-community/gautocloud/loader/fake
-# github.com/cloudfoundry-community/go-cfclient v0.0.0-20200413172050-18981bf12b4b
+# github.com/cloudfoundry-community/go-cfclient v0.0.0-20201123235753-4f46d6348a05
 ## explicit
 github.com/cloudfoundry-community/go-cfclient
 # github.com/cloudfoundry-community/go-cfenv v1.18.0
@@ -59,7 +59,8 @@ github.com/golang-commonmark/mdurl
 github.com/golang-commonmark/puny
 # github.com/golang/mock v1.4.4
 github.com/golang/mock/gomock
-# github.com/golang/protobuf v1.4.2
+# github.com/golang/protobuf v1.4.3
+## explicit
 github.com/golang/protobuf/proto
 # github.com/gorilla/mux v1.8.0
 ## explicit
@@ -78,7 +79,7 @@ github.com/hashicorp/hcl/json/token
 # github.com/magiconair/properties v1.8.4
 ## explicit
 github.com/magiconair/properties
-# github.com/mitchellh/mapstructure v1.3.3
+# github.com/mitchellh/mapstructure v1.4.1
 ## explicit
 github.com/mitchellh/mapstructure
 # github.com/nxadm/tail v1.4.5
@@ -138,7 +139,7 @@ github.com/satori/go.uuid
 # github.com/sirupsen/logrus v1.7.0
 ## explicit
 github.com/sirupsen/logrus
-# github.com/spf13/afero v1.4.1
+# github.com/spf13/afero v1.5.1
 ## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
@@ -158,24 +159,25 @@ github.com/spf13/viper
 github.com/subosito/gotenv
 # github.com/tedsuo/ifrit v0.0.0-20191009134036-9a97d0632f00
 ## explicit
-# golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
+# golang.org/x/net v0.0.0-20210119194325-5f4716e94777
 ## explicit
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
+# golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20201007082116-8445cc04cbdf
+# golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.3
+# golang.org/x/text v0.3.5
+## explicit
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -197,7 +199,8 @@ golang.org/x/text/unicode/norm
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/appengine v1.6.6
+# google.golang.org/appengine v1.6.7
+## explicit
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
@@ -243,5 +246,6 @@ gopkg.in/gomail.v2
 gopkg.in/ini.v1
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 gopkg.in/tomb.v1
-# gopkg.in/yaml.v2 v2.3.0
+# gopkg.in/yaml.v2 v2.4.0
+## explicit
 gopkg.in/yaml.v2
