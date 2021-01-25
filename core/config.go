@@ -1,14 +1,17 @@
 package core
 
-import "flag"
-import "os"
-import "fmt"
-import "strconv"
-import "encoding/json"
-import log "github.com/sirupsen/logrus"
-import "github.com/cloudfoundry-community/gautocloud"
-import "github.com/cloudfoundry-community/gautocloud/connectors/generic"
-import "strings"
+import (
+	"flag"
+	"os"
+	"fmt"
+	"github.com/prometheus/common/version"
+	"strconv"
+	"encoding/json"
+	log "github.com/sirupsen/logrus"
+	"github.com/cloudfoundry-community/gautocloud"
+	"github.com/cloudfoundry-community/gautocloud/connectors/generic"
+	"strings"
+)
 
 type MailCC []string
 
@@ -32,6 +35,7 @@ type AppConfig struct {
 	MailRateDuration int    `json:"mail-rate-duration" cloud:"mail-rate-duration"`
 	ReloadTemplates  bool   `json:"reload-templates"   cloud:"reload-templates"`
 	NbMaxGetParams   int    `json:"nb-max-get-params"  cloud:"nb-max-get-params"`
+	Version          bool
 }
 
 func (self *MailCC) String() string {
@@ -98,6 +102,7 @@ func (self *AppConfig) parseCmdLine() {
 	flag.IntVar(&self.MailRateDuration, "mail-rate-duration", self.MailRateDuration, "Duration (in seconds) of timed window")
 	flag.BoolVar(&self.ReloadTemplates, "reload-templates", self.ReloadTemplates, "Reload ui template on each request (dev)")
 	flag.IntVar(&self.NbMaxGetParams, "nb-max-get-params", self.NbMaxGetParams, "Maximum number of get parameters for http requests")
+	flag.BoolVar(&self.Version, "version", self.Version, "Show version")
 
 	flag.Var(&self.MailCc, "mail-cc", "List of additional recipients to all mails (can give multiple times)")
 	flag.Parse()
@@ -106,6 +111,11 @@ func (self *AppConfig) parseCmdLine() {
 func (self *AppConfig) parseArgs() {
 	// 1.
 	self.parseCmdLine()
+	if self.Version {
+		fmt.Fprintf(os.Stderr, "%s\n", version.Print("cf-wall"))
+		os.Exit(0)
+	}
+
 	if "" != self.ConfigFile {
 		self.parseConfig()
 	}
