@@ -64,7 +64,7 @@ github.com/golang-commonmark/puny
 # github.com/golang/mock v1.5.0
 ## explicit
 github.com/golang/mock/gomock
-# github.com/golang/protobuf v1.5.1
+# github.com/golang/protobuf v1.5.2
 ## explicit
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
@@ -85,7 +85,7 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/magiconair/properties v1.8.4
+# github.com/magiconair/properties v1.8.5
 ## explicit
 github.com/magiconair/properties
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -185,7 +185,7 @@ github.com/spf13/viper
 github.com/subosito/gotenv
 # github.com/tedsuo/ifrit v0.0.0-20191009134036-9a97d0632f00
 ## explicit
-# golang.org/x/net v0.0.0-20210324051636-2c4c8ecb7826
+# golang.org/x/net v0.0.0-20210331212208-0fccb6fa2b5c
 ## explicit
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -197,7 +197,7 @@ golang.org/x/net/html/charset
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20210324051608-47abb6519492
+# golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
